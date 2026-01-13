@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import QuestionBuilder, { Question } from "./QuestionBuilder"
+import { QUIZ_TIMING, QUESTION_CONFIG } from "@/constants/quizConfig"
+import { secondsToMinutes, minutesToSeconds } from "@/lib/utils/timeFormatter"
+import { componentStyles, cn } from "@/constants/theme"
 
 interface QuizCreatorProps {
   initialData?: {
@@ -24,7 +27,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
   const [description, setDescription] = useState(initialData?.description || "")
   const [hasTimeLimit, setHasTimeLimit] = useState(!!initialData?.timeLimitSeconds)
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(
-    initialData?.timeLimitSeconds ? Math.floor(initialData.timeLimitSeconds / 60) : 10
+    initialData?.timeLimitSeconds ? secondsToMinutes(initialData.timeLimitSeconds) : QUIZ_TIMING.DEFAULT_TIME_LIMIT_MINUTES
   )
   const [hasTimeWindow, setHasTimeWindow] = useState(!!(initialData?.availableFrom || initialData?.availableUntil))
   const [availableFrom, setAvailableFrom] = useState(initialData?.availableFrom || "")
@@ -42,12 +45,11 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
     return {
       questionText: "",
       order,
-      options: [
-        { optionText: "", isCorrect: true, order: 0 },
-        { optionText: "", isCorrect: false, order: 1 },
-        { optionText: "", isCorrect: false, order: 2 },
-        { optionText: "", isCorrect: false, order: 3 },
-      ],
+      options: Array.from({ length: QUESTION_CONFIG.DEFAULT_OPTIONS_COUNT }, (_, i) => ({
+        optionText: "",
+        isCorrect: i === 0, // First option is correct by default
+        order: i,
+      })),
     }
   }
 
@@ -121,7 +123,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
       const quizData = {
         title: title.trim(),
         description: description.trim() || null,
-        timeLimitSeconds: hasTimeLimit ? timeLimitMinutes * 60 : null,
+        timeLimitSeconds: hasTimeLimit ? minutesToSeconds(timeLimitMinutes) : null,
         availableFrom: hasTimeWindow && availableFrom ? new Date(availableFrom).toISOString() : null,
         availableUntil: hasTimeWindow && availableUntil ? new Date(availableUntil).toISOString() : null,
         isPublished,
@@ -311,7 +313,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className={componentStyles.alert.error}>
           {error}
         </div>
       )}
@@ -320,14 +322,14 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex-1 px-6 py-3 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50"
+          className={cn("flex-1 px-6 py-3 rounded-md font-medium", componentStyles.button.secondary)}
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={cn("flex-1 px-6 py-3 rounded-md font-medium", componentStyles.button.primary, componentStyles.button.disabled)}
         >
           {isLoading ? "Saving..." : isEdit ? "Update Quiz" : "Create Quiz"}
         </button>

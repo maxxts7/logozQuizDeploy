@@ -6,7 +6,7 @@ import { updateQuizSchema } from "@/lib/validations/quiz"
 // GET /api/quiz/[quizId] - Get single quiz with questions
 export async function GET(
   req: NextRequest,
-  { params }: { params: { quizId: string } }
+  { params }: { params: Promise<{ quizId: string }> }
 ) {
   try {
     const session = await auth()
@@ -18,9 +18,11 @@ export async function GET(
       )
     }
 
+    const { quizId } = await params
+
     const quiz = await prisma.quiz.findUnique({
       where: {
-        id: params.quizId,
+        id: quizId,
       },
       include: {
         questions: {
@@ -66,7 +68,7 @@ export async function GET(
 // PATCH /api/quiz/[quizId] - Update quiz
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { quizId: string } }
+  { params }: { params: Promise<{ quizId: string }> }
 ) {
   try {
     const session = await auth()
@@ -78,9 +80,11 @@ export async function PATCH(
       )
     }
 
+    const { quizId } = await params
+
     // Check if quiz exists and user owns it
     const existingQuiz = await prisma.quiz.findUnique({
-      where: { id: params.quizId },
+      where: { id: quizId },
     })
 
     if (!existingQuiz) {
@@ -112,12 +116,12 @@ export async function PATCH(
     // If questions are provided, delete old ones and create new ones
     if (questions) {
       await prisma.question.deleteMany({
-        where: { quizId: params.quizId },
+        where: { quizId },
       })
     }
 
     const quiz = await prisma.quiz.update({
-      where: { id: params.quizId },
+      where: { id: quizId },
       data: {
         ...(title && { title }),
         ...(description !== undefined && { description }),
@@ -170,7 +174,7 @@ export async function PATCH(
 // DELETE /api/quiz/[quizId] - Delete quiz
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { quizId: string } }
+  { params }: { params: Promise<{ quizId: string }> }
 ) {
   try {
     const session = await auth()
@@ -182,9 +186,11 @@ export async function DELETE(
       )
     }
 
+    const { quizId } = await params
+
     // Check if quiz exists and user owns it
     const existingQuiz = await prisma.quiz.findUnique({
-      where: { id: params.quizId },
+      where: { id: quizId },
     })
 
     if (!existingQuiz) {
@@ -203,7 +209,7 @@ export async function DELETE(
 
     // Delete quiz (cascade will delete questions, options, submissions, answers)
     await prisma.quiz.delete({
-      where: { id: params.quizId },
+      where: { id: quizId },
     })
 
     return NextResponse.json({ message: "Quiz deleted successfully" })

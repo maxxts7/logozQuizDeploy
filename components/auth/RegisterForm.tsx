@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { AUTH_CONFIG, VALIDATION_MESSAGES } from "@/constants/quizConfig"
+import { componentStyles, cn } from "@/constants/theme"
 
 export default function RegisterForm() {
   const router = useRouter()
@@ -24,8 +26,8 @@ export default function RegisterForm() {
       return
     }
 
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters")
+    if (formData.password.length < AUTH_CONFIG.MIN_PASSWORD_LENGTH) {
+      setError(VALIDATION_MESSAGES.PASSWORD_MIN_LENGTH)
       return
     }
 
@@ -115,7 +117,7 @@ export default function RegisterForm() {
               value={formData.password}
               onChange={handleChange}
               required
-              minLength={6}
+              minLength={AUTH_CONFIG.MIN_PASSWORD_LENGTH}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
             />
@@ -132,14 +134,14 @@ export default function RegisterForm() {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              minLength={6}
+              minLength={AUTH_CONFIG.MIN_PASSWORD_LENGTH}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className={componentStyles.alert.error}>
               {error}
             </div>
           )}
@@ -147,7 +149,7 @@ export default function RegisterForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={cn("w-full py-2 px-4 rounded-md", componentStyles.button.primary, componentStyles.button.disabled)}
           >
             {isLoading ? "Creating account..." : "Sign up"}
           </button>

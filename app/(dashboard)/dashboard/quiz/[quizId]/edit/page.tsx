@@ -6,7 +6,7 @@ import QuizCreator from "@/components/quiz/QuizCreator"
 export default async function EditQuizPage({
   params,
 }: {
-  params: { quizId: string }
+  params: Promise<{ quizId: string }>
 }) {
   const session = await auth()
 
@@ -14,9 +14,11 @@ export default async function EditQuizPage({
     redirect("/login")
   }
 
+  const { quizId } = await params
+
   const quiz = await prisma.quiz.findUnique({
     where: {
-      id: params.quizId,
+      id: quizId,
     },
     include: {
       questions: {

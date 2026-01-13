@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db"
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import ShareLink from "@/components/quiz/ShareLink"
+import { getQuizShareUrl } from "@/constants/quizConfig"
+import { formatTimeMinutesSeconds } from "@/lib/utils/timeFormatter"
 
 export default async function AnalyticsPage({
   params,
@@ -53,8 +55,8 @@ export default async function AnalyticsPage({
     return a.timeSpentSeconds - b.timeSpentSeconds
   })
 
-  const shareUrl = quiz.isPublished
-    ? `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/take/${quiz.shareId}`
+  const shareUrl = quiz.isPublished && quiz.shareId
+    ? getQuizShareUrl(quiz.shareId)
     : null
 
   const totalSubmissions = quiz.submissions.length
@@ -109,7 +111,7 @@ export default async function AnalyticsPage({
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-sm font-medium text-gray-500">Avg Time Taken</h3>
           <p className="mt-2 text-3xl font-semibold text-gray-900">
-            {avgTime > 0 ? `${Math.floor(avgTime / 60)}m ${Math.floor(avgTime % 60)}s` : "N/A"}
+            {avgTime > 0 ? formatTimeMinutesSeconds(avgTime) : "N/A"}
           </p>
         </div>
       </div>
@@ -188,7 +190,7 @@ export default async function AnalyticsPage({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {submission.timeSpentSeconds
-                        ? `${Math.floor(submission.timeSpentSeconds / 60)}m ${submission.timeSpentSeconds % 60}s`
+                        ? formatTimeMinutesSeconds(submission.timeSpentSeconds)
                         : "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

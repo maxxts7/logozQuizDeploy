@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { QUIZ_TIMING, VALIDATION_MESSAGES } from "@/constants/quizConfig"
+import { formatTime, formatMinutes } from "@/lib/utils/timeFormatter"
 
 interface QuizTakerProps {
   quiz: {
@@ -41,7 +43,7 @@ export default function QuizTaker({ quiz }: QuizTakerProps) {
 
     const interval = setInterval(() => {
       setElapsedSeconds((prev) => prev + 1)
-    }, 1000)
+    }, QUIZ_TIMING.TIMER_INTERVAL_MS)
 
     return () => clearInterval(interval)
   }, [started])
@@ -58,14 +60,14 @@ export default function QuizTaker({ quiz }: QuizTakerProps) {
         }
         return prev - 1
       })
-    }, 1000)
+    }, QUIZ_TIMING.TIMER_INTERVAL_MS)
 
     return () => clearInterval(interval)
   }, [started, timeRemaining])
 
   const handleStart = () => {
     if (!participantName.trim()) {
-      alert("Please enter your name")
+      alert(VALIDATION_MESSAGES.PARTICIPANT_NAME_REQUIRED)
       return
     }
     setStartTime(Date.now())
@@ -127,12 +129,6 @@ export default function QuizTaker({ quiz }: QuizTakerProps) {
     }
   }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, "0")}`
-  }
-
   if (result) {
     return (
       <div className="bg-white rounded-lg shadow-lg p-8 text-center">
@@ -169,7 +165,7 @@ export default function QuizTaker({ quiz }: QuizTakerProps) {
           <ul className="text-sm text-gray-600 space-y-1">
             <li>• {quiz.questions.length} questions</li>
             {quiz.timeLimitSeconds && (
-              <li>• Time limit: {Math.floor(quiz.timeLimitSeconds / 60)} minutes</li>
+              <li>• Time limit: {formatMinutes(quiz.timeLimitSeconds)}</li>
             )}
           </ul>
         </div>

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { QUESTION_CONFIG, VALIDATION_MESSAGES } from "@/constants/quizConfig"
 
 // Schema for a single quiz option
 export const quizOptionSchema = z.object({
@@ -9,20 +10,20 @@ export const quizOptionSchema = z.object({
 
 // Schema for a single question
 export const quizQuestionSchema = z.object({
-  questionText: z.string().min(1, "Question text is required"),
+  questionText: z.string().min(1, VALIDATION_MESSAGES.QUESTION_TEXT_REQUIRED),
   order: z.number(),
   options: z.array(quizOptionSchema)
-    .min(2, "Each question must have at least 2 options")
-    .max(4, "Each question can have at most 4 options")
+    .min(QUESTION_CONFIG.MIN_OPTIONS_PER_QUESTION, VALIDATION_MESSAGES.OPTION_COUNT_MIN)
+    .max(QUESTION_CONFIG.MAX_OPTIONS_PER_QUESTION, VALIDATION_MESSAGES.OPTION_COUNT_MAX)
     .refine(
       (options) => options.filter(opt => opt.isCorrect).length === 1,
-      "Each question must have exactly one correct answer"
+      VALIDATION_MESSAGES.CORRECT_ANSWER_REQUIRED
     ),
 })
 
 // Schema for creating/updating a quiz
 export const createQuizSchema = z.object({
-  title: z.string().min(1, "Title is required").max(200, "Title too long"),
+  title: z.string().min(1, VALIDATION_MESSAGES.QUIZ_TITLE_REQUIRED).max(200, "Title too long"),
   description: z.string().max(500, "Description too long").optional(),
   timeLimitSeconds: z.number().int().positive().optional().nullable(),
   availableFrom: z.string().datetime().optional().nullable(),
@@ -34,7 +35,7 @@ export const createQuizSchema = z.object({
 
 // Schema for updating a quiz
 export const updateQuizSchema = z.object({
-  title: z.string().min(1, "Title is required").max(200, "Title too long").optional(),
+  title: z.string().min(1, VALIDATION_MESSAGES.QUIZ_TITLE_REQUIRED).max(200, "Title too long").optional(),
   description: z.string().max(500, "Description too long").optional().nullable(),
   timeLimitSeconds: z.number().int().positive().optional().nullable(),
   availableFrom: z.string().datetime().optional().nullable(),
