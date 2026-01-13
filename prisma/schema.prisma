@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model for quiz creators
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  quizzes       Quiz[]
+
+  @@map("users")
+}
+
+// Quiz model
+model Quiz {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  shareId       String    @unique @default(cuid())
+  timeLimitSeconds Int?
+  availableFrom DateTime?
+  availableUntil DateTime?
+  isPublished   Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  creatorId     String
+  creator       User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  questions     Question[]
+  submissions   Submission[]
+
+  @@index([shareId])
+  @@index([creatorId])
+  @@map("quizzes")
+}
+
+// Question model
+model Question {
+  id            String    @id @default(cuid())
+  quizId        String
+  questionText  String
+  order         Int
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  quiz          Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options       QuestionOption[]
+  answers       Answer[]
+
+  @@index([quizId])
+  @@map("questions")
+}
+
+// Question options (multiple choice)
+model QuestionOption {
+  id            String    @id @default(cuid())
+  questionId    String
+  optionText    String
+  isCorrect     Boolean   @default(false)
+  order         Int
+  createdAt     DateTime  @default(now())
+
+  question      Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@map("question_options")
+}
+
+// Submission model (when someone takes a quiz)
+model Submission {
+  id            String    @id @default(cuid())
+  quizId        String
+  takerName     String
+  takerEmail    String?
+  score         Int
+  totalQuestions Int
+  percentage    Float
+  timeSpentSeconds Int?
+  submittedAt   DateTime  @default(now())
+
+  quiz          Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers       Answer[]
+
+  @@index([quizId])
+  @@index([quizId, percentage, timeSpentSeconds])
+  @@map("submissions")
+}
+
+// Answer model (individual question answers in a submission)
+model Answer {
+  id            String    @id @default(cuid())
+  submissionId  String
+  questionId    String
+  selectedOptionId String?
+  isCorrect     Boolean
+  createdAt     DateTime  @default(now())
+
+  submission    Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question      Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, questionId])
+  @@index([submissionId])
+  @@map("answers")
+}
