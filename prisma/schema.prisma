@@ -31,6 +31,9 @@ model Quiz {
   availableFrom DateTime?
   availableUntil DateTime?
   isPublished   Boolean   @default(false)
+  participantFields String @default("[]") // JSON array of {label: string, required: boolean}
+  randomizeQuestions Boolean @default(false)
+  randomizeOptions Boolean @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -51,6 +54,7 @@ model Question {
   quizId        String
   questionText  String
   order         Int
+  marks         Int       @default(1)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -81,9 +85,9 @@ model QuestionOption {
 model Submission {
   id            String    @id @default(cuid())
   quizId        String
-  takerName     String
-  takerEmail    String?
-  score         Int
+  participantData String  @default("{}") // JSON object storing participant field responses
+  score         Int       // Earned marks
+  totalMarks    Int       @default(0) // Total possible marks
   totalQuestions Int
   percentage    Float
   timeSpentSeconds Int?

@@ -12,6 +12,7 @@ export const quizOptionSchema = z.object({
 export const quizQuestionSchema = z.object({
   questionText: z.string().min(1, VALIDATION_MESSAGES.QUESTION_TEXT_REQUIRED),
   order: z.number(),
+  marks: z.number().int().min(1, "Marks must be at least 1").default(1),
   options: z.array(quizOptionSchema)
     .min(QUESTION_CONFIG.MIN_OPTIONS_PER_QUESTION, VALIDATION_MESSAGES.OPTION_COUNT_MIN)
     .max(QUESTION_CONFIG.MAX_OPTIONS_PER_QUESTION, VALIDATION_MESSAGES.OPTION_COUNT_MAX)
@@ -19,6 +20,12 @@ export const quizQuestionSchema = z.object({
       (options) => options.filter(opt => opt.isCorrect).length === 1,
       VALIDATION_MESSAGES.CORRECT_ANSWER_REQUIRED
     ),
+})
+
+// Schema for participant field definition
+export const participantFieldSchema = z.object({
+  label: z.string().min(1, "Field label is required").max(100, "Label too long"),
+  required: z.boolean().default(false),
 })
 
 // Schema for creating/updating a quiz
@@ -29,6 +36,9 @@ export const createQuizSchema = z.object({
   availableFrom: z.string().datetime().optional().nullable(),
   availableUntil: z.string().datetime().optional().nullable(),
   isPublished: z.boolean().default(false),
+  participantFields: z.array(participantFieldSchema).default([]),
+  randomizeQuestions: z.boolean().default(false),
+  randomizeOptions: z.boolean().default(false),
   questions: z.array(quizQuestionSchema)
     .min(1, "Quiz must have at least one question"),
 })
@@ -41,11 +51,15 @@ export const updateQuizSchema = z.object({
   availableFrom: z.string().datetime().optional().nullable(),
   availableUntil: z.string().datetime().optional().nullable(),
   isPublished: z.boolean().optional(),
+  participantFields: z.array(participantFieldSchema).optional(),
+  randomizeQuestions: z.boolean().optional(),
+  randomizeOptions: z.boolean().optional(),
   questions: z.array(quizQuestionSchema).min(1).optional(),
 })
 
 // Type exports
 export type QuizOption = z.infer<typeof quizOptionSchema>
 export type QuizQuestion = z.infer<typeof quizQuestionSchema>
+export type ParticipantField = z.infer<typeof participantFieldSchema>
 export type CreateQuizInput = z.infer<typeof createQuizSchema>
 export type UpdateQuizInput = z.infer<typeof updateQuizSchema>

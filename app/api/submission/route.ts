@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { quizId, participantName, timeSpentSeconds, answers } = body
+    const { quizId, participantData, timeSpentSeconds, answers } = body
 
     if (!quizId || !answers || !Array.isArray(answers)) {
       return NextResponse.json(
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch quiz with correct answers
+    // Fetch quiz with correct answers and marks
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId, isPublished: true },
       include: {
@@ -38,19 +38,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calculate score
-    let correctCount = 0
+    // Fetch full question and option details for review
+    const quizWithDetails = await prisma.quiz.findUnique({
+      where: { id: quizId },
+      include: {
+        questions: {
+          include: {
+            options: true,
+          },
+          orderBy: {
+            order: "asc",
+          },
+        },
+      },
+    })
+
+    // Calculate score based on marks
+    let earnedMarks = 0
+    let totalMarks = 0
     const totalQuestions = quiz.questions.length
 
     const answerRecords = answers.map((answer: { questionId: string; selectedOptionId: string }) => {
-      const question = quiz.questions.find((q) => q.id === answer.questionId)
+      const question = quizWithDetails?.questions.find((q) => q.id === answer.questionId)
       if (!question) return null
+
+      const questionMarks = question.marks || 1
+      totalMarks += questionMarks
 
       const selectedOption = question.options.find((opt) => opt.id === answer.selectedOptionId)
       const isCorrect = selectedOption?.isCorrect || false
 
       if (isCorrect) {
-        correctCount++
+        earnedMarks += questionMarks
       }
 
       return {
@@ -60,14 +79,43 @@ export async function POST(request: NextRequest) {
       }
     }).filter((record) => record !== null)
 
-    const percentage = totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0
+    // Add marks for unanswered questions to total
+    const answeredQuestionIds = answers.map((a: { questionId: string }) => a.questionId)
+    quizWithDetails?.questions.forEach((q) => {
+      if (!answeredQuestionIds.includes(q.id)) {
+        totalMarks += q.marks || 1
+      }
+    })
+
+    // Build detailed review data
+    const reviewData = quizWithDetails?.questions.map((question) => {
+      const participantAnswer = answers.find((a: { questionId: string }) => a.questionId === question.id)
+      const correctOption = question.options.find((opt) => opt.isCorrect)
+
+      return {
+        questionId: question.id,
+        questionText: question.questionText,
+        marks: question.marks || 1,
+        options: question.options.map((opt) => ({
+          id: opt.id,
+          optionText: opt.optionText,
+          isCorrect: opt.isCorrect,
+        })),
+        selectedOptionId: participantAnswer?.selectedOptionId || null,
+        correctOptionId: correctOption?.id || null,
+        isCorrect: participantAnswer?.selectedOptionId === correctOption?.id,
+      }
+    }) || []
+
+    const percentage = totalMarks > 0 ? (earnedMarks / totalMarks) * 100 : 0
 
     // Save submission
     const submission = await prisma.submission.create({
       data: {
         quizId,
-        takerName: participantName || "Anonymous",
-        score: correctCount,
+        participantData: JSON.stringify(participantData || {}),
+        score: earnedMarks,
+        totalMarks,
         totalQuestions,
         percentage,
         timeSpentSeconds: timeSpentSeconds || null,
@@ -86,7 +134,9 @@ export async function POST(request: NextRequest) {
         submissionId: submission.id,
         score: Math.round(percentage),
         total: totalQuestions,
-        correctCount,
+        earnedMarks,
+        totalMarks,
+        review: reviewData,
       },
       { status: 201 }
     )

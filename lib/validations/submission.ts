@@ -8,8 +8,7 @@ export const answerSchema = z.object({
 
 // Schema for submitting a quiz
 export const submissionSchema = z.object({
-  takerName: z.string().min(1, "Name is required").max(100),
-  takerEmail: z.string().email("Invalid email").optional().or(z.literal("")),
+  participantData: z.record(z.string(), z.string()).default({}),
   timeSpentSeconds: z.number().int().positive().optional(),
   answers: z.array(answerSchema).min(1, "At least one answer is required"),
 })

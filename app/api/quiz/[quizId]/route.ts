@@ -106,12 +106,12 @@ export async function PATCH(
 
     if (!validated.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: validated.error.errors },
+        { error: "Validation failed", details: validated.error.issues },
         { status: 400 }
       )
     }
 
-    const { title, description, timeLimitSeconds, availableFrom, availableUntil, isPublished, questions } = validated.data
+    const { title, description, timeLimitSeconds, availableFrom, availableUntil, isPublished, participantFields, randomizeQuestions, randomizeOptions, questions } = validated.data
 
     // If questions are provided, delete old ones and create new ones
     if (questions) {
@@ -129,11 +129,15 @@ export async function PATCH(
         ...(availableFrom !== undefined && { availableFrom: availableFrom ? new Date(availableFrom) : null }),
         ...(availableUntil !== undefined && { availableUntil: availableUntil ? new Date(availableUntil) : null }),
         ...(isPublished !== undefined && { isPublished }),
+        ...(participantFields !== undefined && { participantFields: JSON.stringify(participantFields) }),
+        ...(randomizeQuestions !== undefined && { randomizeQuestions }),
+        ...(randomizeOptions !== undefined && { randomizeOptions }),
         ...(questions && {
           questions: {
             create: questions.map((q, qIndex) => ({
               questionText: q.questionText,
               order: qIndex,
+              marks: q.marks || 1,
               options: {
                 create: q.options.map((opt, optIndex) => ({
                   optionText: opt.optionText,

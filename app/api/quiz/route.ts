@@ -59,12 +59,12 @@ export async function POST(req: NextRequest) {
 
     if (!validated.success) {
       return NextResponse.json(
-        { error: "Validation failed", details: validated.error.errors },
+        { error: "Validation failed", details: validated.error.issues },
         { status: 400 }
       )
     }
 
-    const { title, description, timeLimitSeconds, availableFrom, availableUntil, isPublished, questions } = validated.data
+    const { title, description, timeLimitSeconds, availableFrom, availableUntil, isPublished, participantFields, randomizeQuestions, randomizeOptions, questions } = validated.data
 
     // Create quiz with questions and options
     const quiz = await prisma.quiz.create({
@@ -75,11 +75,15 @@ export async function POST(req: NextRequest) {
         availableFrom: availableFrom ? new Date(availableFrom) : null,
         availableUntil: availableUntil ? new Date(availableUntil) : null,
         isPublished,
+        participantFields: JSON.stringify(participantFields || []),
+        randomizeQuestions: randomizeQuestions || false,
+        randomizeOptions: randomizeOptions || false,
         creatorId: session.user.id,
         questions: {
           create: questions.map((q, qIndex) => ({
             questionText: q.questionText,
             order: qIndex,
+            marks: q.marks || 1,
             options: {
               create: q.options.map((opt, optIndex) => ({
                 optionText: opt.optionText,

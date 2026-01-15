@@ -2,6 +2,16 @@ import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
 import QuizTaker from "@/components/quiz/QuizTaker"
 
+// Fisher-Yates shuffle algorithm
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
 export default async function TakeQuizPage({
   params,
 }: {
@@ -69,10 +79,40 @@ export default async function TakeQuizPage({
     )
   }
 
+  // Parse participantFields from JSON string
+  let parsedFields = []
+  try {
+    parsedFields = JSON.parse(quiz.participantFields || "[]")
+  } catch {
+    parsedFields = []
+  }
+
+  // Apply randomization if enabled
+  let processedQuestions = quiz.questions
+
+  // Shuffle questions if enabled
+  if (quiz.randomizeQuestions) {
+    processedQuestions = shuffleArray(processedQuestions)
+  }
+
+  // Shuffle options for each question if enabled
+  if (quiz.randomizeOptions) {
+    processedQuestions = processedQuestions.map((q) => ({
+      ...q,
+      options: shuffleArray(q.options),
+    }))
+  }
+
+  const quizWithParsedFields = {
+    ...quiz,
+    participantFields: parsedFields,
+    questions: processedQuestions,
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <QuizTaker quiz={quiz} />
+        <QuizTaker quiz={quizWithParsedFields} />
       </div>
     </div>
   )

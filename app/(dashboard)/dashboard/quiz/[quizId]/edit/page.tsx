@@ -44,6 +44,14 @@ export default async function EditQuizPage({
     redirect("/dashboard")
   }
 
+  // Parse participantFields safely
+  let parsedParticipantFields = []
+  try {
+    parsedParticipantFields = JSON.parse(quiz.participantFields || "[]")
+  } catch {
+    parsedParticipantFields = []
+  }
+
   // Transform quiz data for the form
   const initialData = {
     id: quiz.id,
@@ -53,9 +61,13 @@ export default async function EditQuizPage({
     availableFrom: quiz.availableFrom ? new Date(quiz.availableFrom).toISOString().slice(0, 16) : null,
     availableUntil: quiz.availableUntil ? new Date(quiz.availableUntil).toISOString().slice(0, 16) : null,
     isPublished: quiz.isPublished,
+    participantFields: parsedParticipantFields,
+    randomizeQuestions: quiz.randomizeQuestions,
+    randomizeOptions: quiz.randomizeOptions,
     questions: quiz.questions.map((q) => ({
       questionText: q.questionText,
       order: q.order,
+      marks: q.marks || 1,
       options: q.options.map((opt) => ({
         optionText: opt.optionText,
         isCorrect: opt.isCorrect,

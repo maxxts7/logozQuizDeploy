@@ -11,6 +11,7 @@ export interface QuestionOption {
 export interface Question {
   questionText: string
   order: number
+  marks: number
   options: QuestionOption[]
 }
 
@@ -45,19 +46,35 @@ export default function QuestionBuilder({
     onUpdate(questionIndex, { ...question, options: newOptions })
   }
 
+  const handleMarksChange = (marks: number) => {
+    onUpdate(questionIndex, { ...question, marks: Math.max(1, marks) })
+  }
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-gray-900">
           Question {questionIndex + 1}
         </h3>
-        <button
-          type="button"
-          onClick={() => onDelete(questionIndex)}
-          className="text-red-600 hover:text-red-700 text-sm font-medium"
-        >
-          Delete
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Marks:</label>
+            <input
+              type="number"
+              value={question.marks}
+              onChange={(e) => handleMarksChange(parseInt(e.target.value) || 1)}
+              className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-center"
+              min="1"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => onDelete(questionIndex)}
+            className="text-red-600 hover:text-red-700 text-sm font-medium"
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       <div className="space-y-4">

@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import QuestionBuilder, { Question } from "./QuestionBuilder"
+import ParticipantFieldsBuilder, { ParticipantField } from "./ParticipantFieldsBuilder"
+import ExcelUploader from "./ExcelUploader"
 import { QUIZ_TIMING, QUESTION_CONFIG } from "@/constants/quizConfig"
 import { secondsToMinutes, minutesToSeconds } from "@/lib/utils/timeFormatter"
 import { componentStyles, cn } from "@/constants/theme"
@@ -16,6 +18,9 @@ interface QuizCreatorProps {
     availableFrom?: string | null
     availableUntil?: string | null
     isPublished: boolean
+    participantFields?: ParticipantField[]
+    randomizeQuestions?: boolean
+    randomizeOptions?: boolean
     questions: Question[]
   }
   isEdit?: boolean
@@ -33,6 +38,9 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
   const [availableFrom, setAvailableFrom] = useState(initialData?.availableFrom || "")
   const [availableUntil, setAvailableUntil] = useState(initialData?.availableUntil || "")
   const [isPublished, setIsPublished] = useState(initialData?.isPublished || false)
+  const [randomizeQuestions, setRandomizeQuestions] = useState(initialData?.randomizeQuestions || false)
+  const [randomizeOptions, setRandomizeOptions] = useState(initialData?.randomizeOptions || false)
+  const [participantFields, setParticipantFields] = useState<ParticipantField[]>(initialData?.participantFields || [])
   const [questions, setQuestions] = useState<Question[]>(
     initialData?.questions && initialData.questions.length > 0
       ? initialData.questions
@@ -40,11 +48,13 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
   )
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showUploader, setShowUploader] = useState(false)
 
   function createEmptyQuestion(order: number): Question {
     return {
       questionText: "",
       order,
+      marks: 1,
       options: Array.from({ length: QUESTION_CONFIG.DEFAULT_OPTIONS_COUNT }, (_, i) => ({
         optionText: "",
         isCorrect: i === 0, // First option is correct by default
@@ -71,6 +81,28 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
     const newQuestions = questions.filter((_, i) => i !== index)
     // Update order
     setQuestions(newQuestions.map((q, i) => ({ ...q, order: i })))
+  }
+
+  const handleQuestionsImported = (importedQuestions: Question[]) => {
+    // Add imported questions to existing ones (or replace if current is just empty template)
+    const isOnlyEmptyQuestion = questions.length === 1 &&
+      !questions[0].questionText.trim() &&
+      questions[0].options.every(opt => !opt.optionText.trim())
+
+    if (isOnlyEmptyQuestion) {
+      setQuestions(importedQuestions)
+    } else {
+      const updatedQuestions = [
+        ...questions,
+        ...importedQuestions.map((q, i) => ({
+          ...q,
+          order: questions.length + i,
+        })),
+      ]
+      setQuestions(updatedQuestions)
+    }
+    setShowUploader(false)
+    setError("")
   }
 
   const validateQuiz = () => {
@@ -127,9 +159,13 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
         availableFrom: hasTimeWindow && availableFrom ? new Date(availableFrom).toISOString() : null,
         availableUntil: hasTimeWindow && availableUntil ? new Date(availableUntil).toISOString() : null,
         isPublished,
+        participantFields: participantFields.filter(f => f.label.trim()),
+        randomizeQuestions,
+        randomizeOptions,
         questions: questions.map((q, index) => ({
           questionText: q.questionText.trim(),
           order: index,
+          marks: q.marks || 1,
           options: q.options.map((opt, optIndex) => ({
             optionText: opt.optionText.trim(),
             isCorrect: opt.isCorrect,
@@ -287,11 +323,58 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
               Publish immediately (quiz will be accessible via share link)
             </label>
           </div>
+
+          <div className="flex items-center">
+            <input
+              id="randomizeQuestions"
+              type="checkbox"
+              checked={randomizeQuestions}
+              onChange={(e) => setRandomizeQuestions(e.target.checked)}
+              className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+            />
+            <label htmlFor="randomizeQuestions" className="ml-2 text-sm font-medium text-gray-700">
+              Randomize question order for each participant
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              id="randomizeOptions"
+              type="checkbox"
+              checked={randomizeOptions}
+              onChange={(e) => setRandomizeOptions(e.target.checked)}
+              className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+            />
+            <label htmlFor="randomizeOptions" className="ml-2 text-sm font-medium text-gray-700">
+              Randomize answer options for each question
+            </label>
+          </div>
+
+          <ParticipantFieldsBuilder
+            fields={participantFields}
+            onChange={setParticipantFields}
+          />
         </div>
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-xl font-bold text-gray-900">Questions</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-bold text-gray-900">Questions</h3>
+          <button
+            type="button"
+            onClick={() => setShowUploader(!showUploader)}
+            className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Import from Excel
+          </button>
+        </div>
+
+        {showUploader && (
+          <ExcelUploader onQuestionsImported={handleQuestionsImported} />
+        )}
 
         {questions.map((question, index) => (
           <QuestionBuilder

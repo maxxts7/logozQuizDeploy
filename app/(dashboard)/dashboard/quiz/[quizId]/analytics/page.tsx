@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db"
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import ShareLink from "@/components/quiz/ShareLink"
+import ExportButton from "@/components/quiz/ExportButton"
 import { getQuizShareUrl } from "@/constants/quizConfig"
 import { formatTimeMinutesSeconds } from "@/lib/utils/timeFormatter"
 
@@ -141,10 +142,13 @@ export default async function AnalyticsPage({
       )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">
             Recent Submissions
           </h2>
+          {sortedSubmissions.length > 0 && (
+            <ExportButton quizId={quiz.id} />
+          )}
         </div>
 
         {sortedSubmissions.length === 0 ? (
@@ -183,7 +187,15 @@ export default async function AnalyticsPage({
                       {index >= 3 && `#${index + 1}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {submission.takerName || "Anonymous"}
+                      {(() => {
+                        try {
+                          const data = JSON.parse(submission.participantData || "{}")
+                          const values = Object.values(data).filter(Boolean)
+                          return values.length > 0 ? values.join(", ") : "Anonymous"
+                        } catch {
+                          return "Anonymous"
+                        }
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {Math.round(submission.percentage)}%
