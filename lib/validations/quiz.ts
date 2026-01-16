@@ -40,6 +40,7 @@ export const createQuizSchema = z.object({
   randomizeQuestions: z.boolean().default(false),
   randomizeOptions: z.boolean().default(false),
   maxAttemptsPerIp: z.number().int().positive().optional().nullable(),
+  showAnswersAfter: z.string().datetime().optional().nullable(),
   questions: z.array(quizQuestionSchema)
     .min(1, "Quiz must have at least one question"),
 })
@@ -56,6 +57,7 @@ export const updateQuizSchema = z.object({
   randomizeQuestions: z.boolean().optional(),
   randomizeOptions: z.boolean().optional(),
   maxAttemptsPerIp: z.number().int().positive().optional().nullable(),
+  showAnswersAfter: z.string().datetime().optional().nullable(),
   questions: z.array(quizQuestionSchema).min(1).optional(),
 })
 

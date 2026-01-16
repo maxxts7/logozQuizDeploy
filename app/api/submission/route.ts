@@ -87,10 +87,16 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Check if correct answers should be hidden
+    const now = new Date()
+    const showAnswersAfterDate = quiz.showAnswersAfter ? new Date(quiz.showAnswersAfter) : null
+    const shouldHideCorrectAnswers = showAnswersAfterDate && showAnswersAfterDate > now
+
     // Build detailed review data
     const reviewData = quizWithDetails?.questions.map((question) => {
       const participantAnswer = answers.find((a: { questionId: string }) => a.questionId === question.id)
       const correctOption = question.options.find((opt) => opt.isCorrect)
+      const isCorrect = participantAnswer?.selectedOptionId === correctOption?.id
 
       return {
         questionId: question.id,
@@ -99,11 +105,13 @@ export async function POST(request: NextRequest) {
         options: question.options.map((opt) => ({
           id: opt.id,
           optionText: opt.optionText,
-          isCorrect: opt.isCorrect,
+          // Hide isCorrect if answers should be hidden
+          isCorrect: shouldHideCorrectAnswers ? false : opt.isCorrect,
         })),
         selectedOptionId: participantAnswer?.selectedOptionId || null,
-        correctOptionId: correctOption?.id || null,
-        isCorrect: participantAnswer?.selectedOptionId === correctOption?.id,
+        // Hide correctOptionId if answers should be hidden
+        correctOptionId: shouldHideCorrectAnswers ? null : correctOption?.id || null,
+        isCorrect,
       }
     }) || []
 
@@ -138,6 +146,8 @@ export async function POST(request: NextRequest) {
         earnedMarks,
         totalMarks,
         review: reviewData,
+        answersHidden: shouldHideCorrectAnswers,
+        showAnswersAfter: shouldHideCorrectAnswers && quiz.showAnswersAfter ? quiz.showAnswersAfter.toISOString() : null,
       },
       { status: 201 }
     )

@@ -53,6 +53,8 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
       correctOptionId: string | null
       isCorrect: boolean
     }[]
+    answersHidden?: boolean
+    showAnswersAfter?: string | null
   } | null>(null)
   const [timeRemaining, setTimeRemaining] = useState<number | null>(
     quiz.timeLimitSeconds
@@ -205,7 +207,18 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Review Your Answers</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Review Your Answers</h2>
+
+          {result.answersHidden && result.showAnswersAfter && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-amber-800 text-sm">
+                <strong>Note:</strong> Correct answers will be revealed after{" "}
+                <strong>{new Date(result.showAnswersAfter).toLocaleString()}</strong>.
+                For now, you can only see which questions you got right or wrong.
+              </p>
+            </div>
+          )}
+
           <div className="space-y-6">
             {result.review.map((question, index) => (
               <div
@@ -244,10 +257,15 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
                     const isCorrect = option.isCorrect
 
                     let optionStyle = "border-gray-200 bg-white"
-                    if (isCorrect) {
+                    // Only show correct answer highlight if answers are not hidden
+                    if (!result.answersHidden && isCorrect) {
                       optionStyle = "border-green-500 bg-green-100"
-                    } else if (isSelected && !isCorrect) {
+                    } else if (isSelected && !question.isCorrect) {
+                      // Show red for wrong selected answer
                       optionStyle = "border-red-500 bg-red-100"
+                    } else if (isSelected && question.isCorrect) {
+                      // Show green for correct selected answer
+                      optionStyle = "border-green-500 bg-green-100"
                     }
 
                     return (
@@ -263,7 +281,7 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
                                 Your answer
                               </span>
                             )}
-                            {isCorrect && (
+                            {!result.answersHidden && isCorrect && (
                               <span className="text-sm font-medium text-green-600">
                                 Correct answer
                               </span>

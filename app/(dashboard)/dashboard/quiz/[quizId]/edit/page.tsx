@@ -66,6 +66,7 @@ export default async function EditQuizPage({
     randomizeQuestions: quiz.randomizeQuestions,
     randomizeOptions: quiz.randomizeOptions,
     maxAttemptsPerIp: quiz.maxAttemptsPerIp,
+    showAnswersAfterISO: quiz.showAnswersAfter ? quiz.showAnswersAfter.toISOString() : null,
     questions: quiz.questions.map((q) => ({
       questionText: q.questionText,
       order: q.order,

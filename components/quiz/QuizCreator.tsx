@@ -34,6 +34,7 @@ interface QuizCreatorProps {
     randomizeQuestions?: boolean
     randomizeOptions?: boolean
     maxAttemptsPerIp?: number | null
+    showAnswersAfterISO?: string | null // ISO string from server
     questions: Question[]
   }
   isEdit?: boolean
@@ -55,6 +56,8 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
   const [randomizeOptions, setRandomizeOptions] = useState(initialData?.randomizeOptions || false)
   const [hasIpLimit, setHasIpLimit] = useState(!!initialData?.maxAttemptsPerIp)
   const [maxAttemptsPerIp, setMaxAttemptsPerIp] = useState(initialData?.maxAttemptsPerIp || 1)
+  const [hasAnswerRevealWindow, setHasAnswerRevealWindow] = useState(!!initialData?.showAnswersAfterISO)
+  const [showAnswersAfter, setShowAnswersAfter] = useState(isoToDateTimeLocal(initialData?.showAnswersAfterISO))
   const [participantFields, setParticipantFields] = useState<ParticipantField[]>(initialData?.participantFields || [])
   const [questions, setQuestions] = useState<Question[]>(
     initialData?.questions && initialData.questions.length > 0
@@ -199,6 +202,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
         randomizeQuestions,
         randomizeOptions,
         maxAttemptsPerIp: hasIpLimit ? maxAttemptsPerIp : null,
+        showAnswersAfter: hasAnswerRevealWindow && showAnswersAfter ? new Date(showAnswersAfter).toISOString() : null,
         questions: questions.map((q, index) => ({
           questionText: q.questionText.trim(),
           order: index,
@@ -431,6 +435,41 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
                   min="1"
                 />
                 <span className="text-sm text-gray-500">per IP address</span>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <input
+                id="hasAnswerRevealWindow"
+                type="checkbox"
+                checked={hasAnswerRevealWindow}
+                onChange={(e) => setHasAnswerRevealWindow(e.target.checked)}
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+              />
+              <label htmlFor="hasAnswerRevealWindow" className="ml-2 text-sm font-medium text-gray-700">
+                Delay showing correct answers until a specific time
+              </label>
+            </div>
+
+            {hasAnswerRevealWindow && (
+              <div className="ml-6 space-y-2">
+                <p className="text-sm text-gray-500">
+                  Until this time, participants will only see which questions they got wrong, not the correct answers.
+                </p>
+                <div>
+                  <label htmlFor="showAnswersAfter" className="block text-sm font-medium text-gray-700 mb-1">
+                    Show correct answers after
+                  </label>
+                  <input
+                    id="showAnswersAfter"
+                    type="datetime-local"
+                    value={showAnswersAfter}
+                    onChange={(e) => setShowAnswersAfter(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
             )}
           </div>

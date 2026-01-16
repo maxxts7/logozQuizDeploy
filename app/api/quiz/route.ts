@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { title, description, timeLimitSeconds, availableFrom, availableUntil, isPublished, participantFields, randomizeQuestions, randomizeOptions, maxAttemptsPerIp, questions } = validated.data
+    const { title, description, timeLimitSeconds, availableFrom, availableUntil, isPublished, participantFields, randomizeQuestions, randomizeOptions, maxAttemptsPerIp, showAnswersAfter, questions } = validated.data
 
     // Create quiz with questions and options
     const quiz = await prisma.quiz.create({
@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
         randomizeQuestions: randomizeQuestions || false,
         randomizeOptions: randomizeOptions || false,
         maxAttemptsPerIp: maxAttemptsPerIp || null,
+        showAnswersAfter: showAnswersAfter ? new Date(showAnswersAfter) : null,
         creatorId: session.user.id,
         questions: {
           create: questions.map((q, qIndex) => ({
