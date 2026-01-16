@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { quizId, participantData, timeSpentSeconds, answers } = body
+    const { quizId, participantData, timeSpentSeconds, ipAddress, answers } = body
 
     if (!quizId || !answers || !Array.isArray(answers)) {
       return NextResponse.json(
@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
         totalQuestions,
         percentage,
         timeSpentSeconds: timeSpentSeconds || null,
+        ipAddress: ipAddress || null,
         submittedAt: new Date(),
         answers: {
           create: answerRecords,

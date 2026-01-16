@@ -34,6 +34,7 @@ model Quiz {
   participantFields String @default("[]") // JSON array of {label: string, required: boolean}
   randomizeQuestions Boolean @default(false)
   randomizeOptions Boolean @default(false)
+  maxAttemptsPerIp Int?    // Limit attempts per IP address (null = unlimited)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -91,12 +92,14 @@ model Submission {
   totalQuestions Int
   percentage    Float
   timeSpentSeconds Int?
+  ipAddress     String?   // Track IP for attempt limiting
   submittedAt   DateTime  @default(now())
 
   quiz          Quiz      @relation(fields: [quizId], references: [id], onDelete: Cascade)
   answers       Answer[]
 
   @@index([quizId])
+  @@index([quizId, ipAddress])
   @@index([quizId, percentage, timeSpentSeconds])
   @@map("submissions")
 }

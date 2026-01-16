@@ -28,9 +28,10 @@ interface QuizTakerProps {
       }[]
     }[]
   }
+  visitorIp?: string
 }
 
-export default function QuizTaker({ quiz }: QuizTakerProps) {
+export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
   const router = useRouter()
   const [participantData, setParticipantData] = useState<Record<string, string>>({})
   const [started, setStarted] = useState(false)
@@ -152,6 +153,7 @@ export default function QuizTaker({ quiz }: QuizTakerProps) {
           quizId: quiz.id,
           participantData,
           timeSpentSeconds,
+          ipAddress: visitorIp,
           answers: Object.entries(answers).map(([questionId, optionId]) => ({
             questionId,
             selectedOptionId: optionId,

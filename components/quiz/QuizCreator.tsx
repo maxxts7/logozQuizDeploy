@@ -21,6 +21,7 @@ interface QuizCreatorProps {
     participantFields?: ParticipantField[]
     randomizeQuestions?: boolean
     randomizeOptions?: boolean
+    maxAttemptsPerIp?: number | null
     questions: Question[]
   }
   isEdit?: boolean
@@ -40,6 +41,8 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
   const [isPublished, setIsPublished] = useState(initialData?.isPublished || false)
   const [randomizeQuestions, setRandomizeQuestions] = useState(initialData?.randomizeQuestions || false)
   const [randomizeOptions, setRandomizeOptions] = useState(initialData?.randomizeOptions || false)
+  const [hasIpLimit, setHasIpLimit] = useState(!!initialData?.maxAttemptsPerIp)
+  const [maxAttemptsPerIp, setMaxAttemptsPerIp] = useState(initialData?.maxAttemptsPerIp || 1)
   const [participantFields, setParticipantFields] = useState<ParticipantField[]>(initialData?.participantFields || [])
   const [questions, setQuestions] = useState<Question[]>(
     initialData?.questions && initialData.questions.length > 0
@@ -183,6 +186,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
         participantFields: participantFields.filter(f => f.label.trim()),
         randomizeQuestions,
         randomizeOptions,
+        maxAttemptsPerIp: hasIpLimit ? maxAttemptsPerIp : null,
         questions: questions.map((q, index) => ({
           questionText: q.questionText.trim(),
           order: index,
@@ -369,6 +373,38 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
             <label htmlFor="randomizeOptions" className="ml-2 text-sm font-medium text-gray-700">
               Randomize answer options for each question
             </label>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <input
+                id="hasIpLimit"
+                type="checkbox"
+                checked={hasIpLimit}
+                onChange={(e) => setHasIpLimit(e.target.checked)}
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+              />
+              <label htmlFor="hasIpLimit" className="ml-2 text-sm font-medium text-gray-700">
+                Limit attempts per IP address
+              </label>
+            </div>
+
+            {hasIpLimit && (
+              <div className="ml-6 flex items-center gap-2">
+                <label htmlFor="maxAttemptsPerIp" className="text-sm font-medium text-gray-700">
+                  Maximum attempts:
+                </label>
+                <input
+                  id="maxAttemptsPerIp"
+                  type="number"
+                  value={maxAttemptsPerIp}
+                  onChange={(e) => setMaxAttemptsPerIp(parseInt(e.target.value) || 1)}
+                  className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  min="1"
+                />
+                <span className="text-sm text-gray-500">per IP address</span>
+              </div>
+            )}
           </div>
 
           <ParticipantFieldsBuilder

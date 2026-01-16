@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
+import { headers } from "next/headers"
 import QuizTaker from "@/components/quiz/QuizTaker"
 import QuizAvailabilityMessage from "@/components/quiz/QuizAvailabilityMessage"
 
@@ -48,6 +49,38 @@ export default async function TakeQuizPage({
 
   if (!quiz) {
     notFound()
+  }
+
+  // Get visitor's IP address for attempt limiting
+  const headersList = await headers()
+  const forwardedFor = headersList.get("x-forwarded-for")
+  const realIp = headersList.get("x-real-ip")
+  const visitorIp = forwardedFor?.split(",")[0]?.trim() || realIp || "unknown"
+
+  // Check if IP limit is exceeded
+  if (quiz.maxAttemptsPerIp && quiz.maxAttemptsPerIp > 0) {
+    const existingSubmissions = await prisma.submission.count({
+      where: {
+        quizId: quiz.id,
+        ipAddress: visitorIp,
+      },
+    })
+
+    if (existingSubmissions >= quiz.maxAttemptsPerIp) {
+      return (
+        <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+          <div className="max-w-md mx-auto px-4">
+            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Attempt Limit Reached</h1>
+              <p className="text-gray-600">
+                You have already submitted this quiz {existingSubmissions} time{existingSubmissions !== 1 ? "s" : ""}.
+                The maximum allowed attempts from your location is {quiz.maxAttemptsPerIp}.
+              </p>
+            </div>
+          </div>
+        </div>
+      )
+    }
   }
 
   // Check if quiz is within availability window
@@ -118,7 +151,7 @@ export default async function TakeQuizPage({
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <QuizTaker quiz={quizWithParsedFields} />
+        <QuizTaker quiz={quizWithParsedFields} visitorIp={visitorIp} />
       </div>
     </div>
   )
