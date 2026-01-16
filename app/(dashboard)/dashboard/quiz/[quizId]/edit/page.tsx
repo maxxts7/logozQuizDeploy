@@ -52,28 +52,20 @@ export default async function EditQuizPage({
     parsedParticipantFields = []
   }
 
-  // Helper to format date for datetime-local input (uses local timezone)
-  const formatDateTimeLocal = (date: Date): string => {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    return `${year}-${month}-${day}T${hours}:${minutes}`
-  }
-
   // Transform quiz data for the form
+  // Pass ISO strings - client component will format to local timezone
   const initialData = {
     id: quiz.id,
     title: quiz.title,
     description: quiz.description,
     timeLimitSeconds: quiz.timeLimitSeconds,
-    availableFrom: quiz.availableFrom ? formatDateTimeLocal(new Date(quiz.availableFrom)) : null,
-    availableUntil: quiz.availableUntil ? formatDateTimeLocal(new Date(quiz.availableUntil)) : null,
+    availableFromISO: quiz.availableFrom ? quiz.availableFrom.toISOString() : null,
+    availableUntilISO: quiz.availableUntil ? quiz.availableUntil.toISOString() : null,
     isPublished: quiz.isPublished,
     participantFields: parsedParticipantFields,
     randomizeQuestions: quiz.randomizeQuestions,
     randomizeOptions: quiz.randomizeOptions,
+    maxAttemptsPerIp: quiz.maxAttemptsPerIp,
     questions: quiz.questions.map((q) => ({
       questionText: q.questionText,
       order: q.order,

@@ -9,14 +9,26 @@ import { QUIZ_TIMING, QUESTION_CONFIG } from "@/constants/quizConfig"
 import { secondsToMinutes, minutesToSeconds } from "@/lib/utils/timeFormatter"
 import { componentStyles, cn } from "@/constants/theme"
 
+// Helper to convert ISO string to datetime-local format in user's local timezone
+function isoToDateTimeLocal(isoString: string | null | undefined): string {
+  if (!isoString) return ""
+  const date = new Date(isoString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
 interface QuizCreatorProps {
   initialData?: {
     id?: string
     title: string
     description?: string | null
     timeLimitSeconds?: number | null
-    availableFrom?: string | null
-    availableUntil?: string | null
+    availableFromISO?: string | null  // ISO string from server
+    availableUntilISO?: string | null // ISO string from server
     isPublished: boolean
     participantFields?: ParticipantField[]
     randomizeQuestions?: boolean
@@ -35,9 +47,9 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(
     initialData?.timeLimitSeconds ? secondsToMinutes(initialData.timeLimitSeconds) : QUIZ_TIMING.DEFAULT_TIME_LIMIT_MINUTES
   )
-  const [hasTimeWindow, setHasTimeWindow] = useState(!!(initialData?.availableFrom || initialData?.availableUntil))
-  const [availableFrom, setAvailableFrom] = useState(initialData?.availableFrom || "")
-  const [availableUntil, setAvailableUntil] = useState(initialData?.availableUntil || "")
+  const [hasTimeWindow, setHasTimeWindow] = useState(!!(initialData?.availableFromISO || initialData?.availableUntilISO))
+  const [availableFrom, setAvailableFrom] = useState(isoToDateTimeLocal(initialData?.availableFromISO))
+  const [availableUntil, setAvailableUntil] = useState(isoToDateTimeLocal(initialData?.availableUntilISO))
   const [isPublished, setIsPublished] = useState(initialData?.isPublished || false)
   const [randomizeQuestions, setRandomizeQuestions] = useState(initialData?.randomizeQuestions || false)
   const [randomizeOptions, setRandomizeOptions] = useState(initialData?.randomizeOptions || false)
@@ -397,8 +409,24 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
                 <input
                   id="maxAttemptsPerIp"
                   type="number"
-                  value={maxAttemptsPerIp}
-                  onChange={(e) => setMaxAttemptsPerIp(parseInt(e.target.value) || 1)}
+                  value={maxAttemptsPerIp || ""}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    if (val === "") {
+                      setMaxAttemptsPerIp(0)
+                    } else {
+                      const num = parseInt(val)
+                      if (!isNaN(num) && num >= 0) {
+                        setMaxAttemptsPerIp(num)
+                      }
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Ensure minimum of 1 when leaving the field
+                    if (!maxAttemptsPerIp || maxAttemptsPerIp < 1) {
+                      setMaxAttemptsPerIp(1)
+                    }
+                  }}
                   className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   min="1"
                 />
