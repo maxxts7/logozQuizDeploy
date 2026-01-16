@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
 import QuizTaker from "@/components/quiz/QuizTaker"
+import QuizAvailabilityMessage from "@/components/quiz/QuizAvailabilityMessage"
 
 // Fisher-Yates shuffle algorithm
 function shuffleArray<T>(array: T[]): T[] {
@@ -50,28 +51,33 @@ export default async function TakeQuizPage({
   }
 
   // Check if quiz is within availability window
+  // Use UTC comparison for consistency
   const now = new Date()
-  const isAvailable =
-    (!quiz.availableFrom || new Date(quiz.availableFrom) <= now) &&
-    (!quiz.availableUntil || new Date(quiz.availableUntil) >= now)
+  const availableFromDate = quiz.availableFrom ? new Date(quiz.availableFrom) : null
+  const availableUntilDate = quiz.availableUntil ? new Date(quiz.availableUntil) : null
+
+  const isBeforeStart = availableFromDate && availableFromDate > now
+  const isAfterEnd = availableUntilDate && availableUntilDate < now
+  const isAvailable = !isBeforeStart && !isAfterEnd
 
   if (!isAvailable) {
+    // Pass ISO strings to client component for proper local time display
     return (
       <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
         <div className="max-w-md mx-auto px-4">
           <div className="bg-white rounded-lg shadow-lg p-8 text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Quiz Not Available</h1>
-            {quiz.availableFrom && new Date(quiz.availableFrom) > now && (
-              <p className="text-gray-600">
-                This quiz will be available from{" "}
-                <strong>{new Date(quiz.availableFrom).toLocaleString()}</strong>
-              </p>
+            {isBeforeStart && quiz.availableFrom && (
+              <QuizAvailabilityMessage
+                type="notStarted"
+                dateISO={quiz.availableFrom.toISOString()}
+              />
             )}
-            {quiz.availableUntil && new Date(quiz.availableUntil) < now && (
-              <p className="text-gray-600">
-                This quiz closed on{" "}
-                <strong>{new Date(quiz.availableUntil).toLocaleString()}</strong>
-              </p>
+            {isAfterEnd && quiz.availableUntil && (
+              <QuizAvailabilityMessage
+                type="closed"
+                dateISO={quiz.availableUntil.toISOString()}
+              />
             )}
           </div>
         </div>
