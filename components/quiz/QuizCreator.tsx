@@ -83,6 +83,27 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
     setQuestions(newQuestions.map((q, i) => ({ ...q, order: i })))
   }
 
+  const duplicateQuestion = (index: number) => {
+    const questionToDuplicate = questions[index]
+    const duplicatedQuestion: Question = {
+      questionText: questionToDuplicate.questionText,
+      order: index + 1,
+      marks: questionToDuplicate.marks,
+      options: questionToDuplicate.options.map((opt) => ({
+        optionText: opt.optionText,
+        isCorrect: opt.isCorrect,
+        order: opt.order,
+      })),
+    }
+    // Insert after the current question and update orders
+    const newQuestions = [
+      ...questions.slice(0, index + 1),
+      duplicatedQuestion,
+      ...questions.slice(index + 1),
+    ].map((q, i) => ({ ...q, order: i }))
+    setQuestions(newQuestions)
+  }
+
   const handleQuestionsImported = (importedQuestions: Question[]) => {
     // Add imported questions to existing ones (or replace if current is just empty template)
     const isOnlyEmptyQuestion = questions.length === 1 &&
@@ -383,6 +404,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
             questionIndex={index}
             onUpdate={updateQuestion}
             onDelete={deleteQuestion}
+            onDuplicate={duplicateQuestion}
           />
         ))}
 

@@ -52,14 +52,24 @@ export default async function EditQuizPage({
     parsedParticipantFields = []
   }
 
+  // Helper to format date for datetime-local input (uses local timezone)
+  const formatDateTimeLocal = (date: Date): string => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  }
+
   // Transform quiz data for the form
   const initialData = {
     id: quiz.id,
     title: quiz.title,
     description: quiz.description,
     timeLimitSeconds: quiz.timeLimitSeconds,
-    availableFrom: quiz.availableFrom ? new Date(quiz.availableFrom).toISOString().slice(0, 16) : null,
-    availableUntil: quiz.availableUntil ? new Date(quiz.availableUntil).toISOString().slice(0, 16) : null,
+    availableFrom: quiz.availableFrom ? formatDateTimeLocal(new Date(quiz.availableFrom)) : null,
+    availableUntil: quiz.availableUntil ? formatDateTimeLocal(new Date(quiz.availableUntil)) : null,
     isPublished: quiz.isPublished,
     participantFields: parsedParticipantFields,
     randomizeQuestions: quiz.randomizeQuestions,

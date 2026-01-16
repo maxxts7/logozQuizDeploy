@@ -20,6 +20,7 @@ interface QuestionBuilderProps {
   questionIndex: number
   onUpdate: (index: number, question: Question) => void
   onDelete: (index: number) => void
+  onDuplicate: (index: number) => void
 }
 
 export default function QuestionBuilder({
@@ -27,6 +28,7 @@ export default function QuestionBuilder({
   questionIndex,
   onUpdate,
   onDelete,
+  onDuplicate,
 }: QuestionBuilderProps) {
   const handleQuestionTextChange = (text: string) => {
     onUpdate(questionIndex, { ...question, questionText: text })
@@ -67,6 +69,13 @@ export default function QuestionBuilder({
               min="1"
             />
           </div>
+          <button
+            type="button"
+            onClick={() => onDuplicate(questionIndex)}
+            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          >
+            Duplicate
+          </button>
           <button
             type="button"
             onClick={() => onDelete(questionIndex)}
