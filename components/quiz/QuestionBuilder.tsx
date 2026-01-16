@@ -53,12 +53,12 @@ export default function QuestionBuilder({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-      <div className="flex justify-between items-center mb-4">
+    <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
         <h3 className="text-lg font-semibold text-gray-900">
           Question {questionIndex + 1}
         </h3>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-gray-700">Marks:</label>
             <input
@@ -69,20 +69,22 @@ export default function QuestionBuilder({
               min="1"
             />
           </div>
-          <button
-            type="button"
-            onClick={() => onDuplicate(questionIndex)}
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-          >
-            Duplicate
-          </button>
-          <button
-            type="button"
-            onClick={() => onDelete(questionIndex)}
-            className="text-red-600 hover:text-red-700 text-sm font-medium"
-          >
-            Delete
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onDuplicate(questionIndex)}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            >
+              Duplicate
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(questionIndex)}
+              className="text-red-600 hover:text-red-700 text-sm font-medium"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       </div>
 
