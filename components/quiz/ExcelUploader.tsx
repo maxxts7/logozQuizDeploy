@@ -8,6 +8,45 @@ interface ExcelUploaderProps {
   onQuestionsImported: (questions: Question[]) => void
 }
 
+// Valid answer indicators (1-4 or A-D)
+const ANSWER_INDICATORS = ["1", "2", "3", "4", "A", "B", "C", "D"]
+
+// Maps answer indicators to zero-based option index
+const ANSWER_INDEX_MAP: Record<string, number> = {
+  "1": 0, "A": 0,
+  "2": 1, "B": 1,
+  "3": 2, "C": 2,
+  "4": 3, "D": 3,
+}
+
+function isAnswerIndicator(value: string): boolean {
+  return ANSWER_INDICATORS.includes(value.toUpperCase())
+}
+
+function getAnswerIndex(indicator: string): number {
+  return ANSWER_INDEX_MAP[indicator.toUpperCase()] ?? 0
+}
+
+function buildOptions(
+  row: (string | number)[],
+  startCol: number,
+  endCol: number,
+  correctIndex: number
+): { optionText: string; isCorrect: boolean; order: number }[] {
+  const options: { optionText: string; isCorrect: boolean; order: number }[] = []
+  for (let j = startCol; j < endCol; j++) {
+    const optionText = String(row[j] || "").trim()
+    if (optionText) {
+      options.push({
+        optionText,
+        isCorrect: options.length === correctIndex,
+        order: options.length,
+      })
+    }
+  }
+  return options
+}
+
 export default function ExcelUploader({ onQuestionsImported }: ExcelUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | null>(null)
@@ -57,84 +96,33 @@ export default function ExcelUploader({ onQuestionsImported }: ExcelUploaderProp
         const questionText = String(row[0] || "").trim()
         if (!questionText) continue
 
-        // Get options (columns B, C, D, E, etc.)
-        const options: { optionText: string; isCorrect: boolean; order: number }[] = []
-        let correctAnswerIndex = -1
-
-        // Check if last column is the correct answer indicator
-        const lastCol = row[row.length - 1]
-        const lastColStr = String(lastCol).trim().toUpperCase()
-
-        // Check for marks column (last column if it's a number > 0)
-        let marks = 1
-        let endCol = row.length
-
-        // Check if last column is marks (a positive number)
-        const lastColNum = parseInt(String(lastCol))
+        // Analyze row structure to determine format
+        const lastCol = String(row[row.length - 1]).trim()
         const secondLastCol = row.length > 1 ? String(row[row.length - 2]).trim().toUpperCase() : ""
+        const lastColNum = parseInt(lastCol)
+        const hasMarksColumn = !isNaN(lastColNum) && lastColNum > 0 && isAnswerIndicator(secondLastCol)
+        const hasAnswerIndicator = isAnswerIndicator(lastCol.toUpperCase())
 
-        if (!isNaN(lastColNum) && lastColNum > 0 && ["A", "B", "C", "D", "1", "2", "3", "4"].includes(secondLastCol)) {
-          // Last column is marks, second-to-last is correct answer
+        let marks = 1
+        let options: { optionText: string; isCorrect: boolean; order: number }[]
+
+        if (hasMarksColumn) {
+          // Format: Question | Options... | Answer | Marks
           marks = lastColNum
-          endCol = row.length - 1
-          const answerMap: Record<string, number> = {
-            "1": 0, "A": 0,
-            "2": 1, "B": 1,
-            "3": 2, "C": 2,
-            "4": 3, "D": 3,
-          }
-          correctAnswerIndex = answerMap[secondLastCol] ?? 0
-
-          // Options are columns 1 to third-to-last
-          for (let j = 1; j < endCol - 1; j++) {
-            const optionText = String(row[j] || "").trim()
-            if (optionText) {
-              options.push({
-                optionText,
-                isCorrect: options.length === correctAnswerIndex,
-                order: options.length,
-              })
-            }
-          }
-        } else if (["1", "2", "3", "4", "A", "B", "C", "D"].includes(lastColStr)) {
-          // Last column is the answer indicator (no marks column)
-          const answerMap: Record<string, number> = {
-            "1": 0, "A": 0,
-            "2": 1, "B": 1,
-            "3": 2, "C": 2,
-            "4": 3, "D": 3,
-          }
-          correctAnswerIndex = answerMap[lastColStr] ?? 0
-
-          // Options are columns 1 to second-to-last
-          for (let j = 1; j < row.length - 1; j++) {
-            const optionText = String(row[j] || "").trim()
-            if (optionText) {
-              options.push({
-                optionText,
-                isCorrect: options.length === correctAnswerIndex,
-                order: options.length,
-              })
-            }
-          }
+          const correctIndex = getAnswerIndex(secondLastCol)
+          options = buildOptions(row, 1, row.length - 2, correctIndex)
+        } else if (hasAnswerIndicator) {
+          // Format: Question | Options... | Answer
+          const correctIndex = getAnswerIndex(lastCol)
+          options = buildOptions(row, 1, row.length - 1, correctIndex)
         } else {
-          // No answer indicator - assume first option is correct
-          for (let j = 1; j < row.length; j++) {
-            const optionText = String(row[j] || "").trim()
-            if (optionText) {
-              options.push({
-                optionText,
-                isCorrect: options.length === 0, // First option is correct
-                order: options.length,
-              })
-            }
-          }
+          // Format: Question | Options... (first option is correct)
+          options = buildOptions(row, 1, row.length, 0)
         }
 
         if (options.length >= 2) {
           // Ensure at least one correct answer
-          const hasCorrect = options.some(opt => opt.isCorrect)
-          if (!hasCorrect && options.length > 0) {
+          if (!options.some(opt => opt.isCorrect) && options.length > 0) {
             options[0].isCorrect = true
           }
 

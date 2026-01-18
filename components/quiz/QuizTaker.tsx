@@ -255,18 +255,15 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
                   {question.options.map((option) => {
                     const isSelected = option.id === question.selectedOptionId
                     const isCorrect = option.isCorrect
+                    const showCorrectHighlight = !result.answersHidden && isCorrect
+                    const showWrongHighlight = isSelected && !question.isCorrect
+                    const showSelectedCorrect = isSelected && question.isCorrect
 
-                    let optionStyle = "border-gray-200 bg-white"
-                    // Only show correct answer highlight if answers are not hidden
-                    if (!result.answersHidden && isCorrect) {
-                      optionStyle = "border-green-500 bg-green-100"
-                    } else if (isSelected && !question.isCorrect) {
-                      // Show red for wrong selected answer
-                      optionStyle = "border-red-500 bg-red-100"
-                    } else if (isSelected && question.isCorrect) {
-                      // Show green for correct selected answer
-                      optionStyle = "border-green-500 bg-green-100"
-                    }
+                    const optionStyle = (showCorrectHighlight || showSelectedCorrect)
+                      ? "border-green-500 bg-green-100"
+                      : showWrongHighlight
+                        ? "border-red-500 bg-red-100"
+                        : "border-gray-200 bg-white"
 
                     return (
                       <div
@@ -281,7 +278,7 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
                                 Your answer
                               </span>
                             )}
-                            {!result.answersHidden && isCorrect && (
+                            {showCorrectHighlight && (
                               <span className="text-sm font-medium text-green-600">
                                 Correct answer
                               </span>

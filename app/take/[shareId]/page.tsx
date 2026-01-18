@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
-import { headers } from "next/headers"
 import QuizTaker from "@/components/quiz/QuizTaker"
 import QuizAvailabilityMessage from "@/components/quiz/QuizAvailabilityMessage"
+import { safeJsonParse } from "@/lib/utils/parsing"
+import { getVisitorIp } from "@/lib/utils/request"
 
 // Fisher-Yates shuffle algorithm
 function shuffleArray<T>(array: T[]): T[] {
@@ -52,10 +53,7 @@ export default async function TakeQuizPage({
   }
 
   // Get visitor's IP address for attempt limiting
-  const headersList = await headers()
-  const forwardedFor = headersList.get("x-forwarded-for")
-  const realIp = headersList.get("x-real-ip")
-  const visitorIp = forwardedFor?.split(",")[0]?.trim() || realIp || "unknown"
+  const visitorIp = await getVisitorIp()
 
   // Check if IP limit is exceeded
   if (quiz.maxAttemptsPerIp && quiz.maxAttemptsPerIp > 0) {
@@ -119,12 +117,7 @@ export default async function TakeQuizPage({
   }
 
   // Parse participantFields from JSON string
-  let parsedFields = []
-  try {
-    parsedFields = JSON.parse(quiz.participantFields || "[]")
-  } catch {
-    parsedFields = []
-  }
+  const parsedFields = safeJsonParse(quiz.participantFields, [])
 
   // Apply randomization if enabled
   let processedQuestions = quiz.questions

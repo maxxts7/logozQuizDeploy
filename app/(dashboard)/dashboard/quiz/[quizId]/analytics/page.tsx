@@ -6,6 +6,7 @@ import ShareLink from "@/components/quiz/ShareLink"
 import ExportButton from "@/components/quiz/ExportButton"
 import { getQuizShareUrl } from "@/constants/quizConfig"
 import { formatTimeMinutesSeconds } from "@/lib/utils/timeFormatter"
+import { formatParticipantDisplay } from "@/lib/utils/parsing"
 
 export default async function AnalyticsPage({
   params,
@@ -187,15 +188,7 @@ export default async function AnalyticsPage({
                       {index >= 3 && `#${index + 1}`}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {(() => {
-                        try {
-                          const data = JSON.parse(submission.participantData || "{}")
-                          const values = Object.values(data).filter(Boolean)
-                          return values.length > 0 ? values.join(", ") : "Anonymous"
-                        } catch {
-                          return "Anonymous"
-                        }
-                      })()}
+                      {formatParticipantDisplay(submission.participantData)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {Math.round(submission.percentage)}%

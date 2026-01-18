@@ -99,11 +99,3 @@ export const VALIDATION_MESSAGES = {
 export function getQuizShareUrl(shareId: string): string {
   return `${URL_CONFIG.BASE_URL}/take/${shareId}`;
 }
-
-/**
- * Helper function to format time limit display
- */
-export function formatTimeLimitDisplay(seconds: number): string {
-  const minutes = Math.floor(seconds / QUIZ_TIMING.SECONDS_PER_MINUTE);
-  return `${minutes} min limit`;
-}

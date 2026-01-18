@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { updateQuizSchema } from "@/lib/validations/quiz"
+import { verifyQuizOwnership } from "@/lib/utils/quiz"
 
 // GET /api/quiz/[quizId] - Get single quiz with questions
 export async function GET(
@@ -71,34 +72,12 @@ export async function PATCH(
   { params }: { params: Promise<{ quizId: string }> }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
     const { quizId } = await params
 
-    // Check if quiz exists and user owns it
-    const existingQuiz = await prisma.quiz.findUnique({
-      where: { id: quizId },
-    })
-
-    if (!existingQuiz) {
-      return NextResponse.json(
-        { error: "Quiz not found" },
-        { status: 404 }
-      )
-    }
-
-    if (existingQuiz.creatorId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      )
+    // Verify ownership
+    const ownershipCheck = await verifyQuizOwnership(quizId)
+    if (!ownershipCheck.success) {
+      return ownershipCheck.response
     }
 
     const body = await req.json()
@@ -183,34 +162,12 @@ export async function DELETE(
   { params }: { params: Promise<{ quizId: string }> }
 ) {
   try {
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      )
-    }
-
     const { quizId } = await params
 
-    // Check if quiz exists and user owns it
-    const existingQuiz = await prisma.quiz.findUnique({
-      where: { id: quizId },
-    })
-
-    if (!existingQuiz) {
-      return NextResponse.json(
-        { error: "Quiz not found" },
-        { status: 404 }
-      )
-    }
-
-    if (existingQuiz.creatorId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
-      )
+    // Verify ownership
+    const ownershipCheck = await verifyQuizOwnership(quizId)
+    if (!ownershipCheck.success) {
+      return ownershipCheck.response
     }
 
     // Delete quiz (cascade will delete questions, options, submissions, answers)

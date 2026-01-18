@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import QuizCreator from "@/components/quiz/QuizCreator"
+import { safeJsonParse } from "@/lib/utils/parsing"
 
 export default async function EditQuizPage({
   params,
@@ -45,12 +46,7 @@ export default async function EditQuizPage({
   }
 
   // Parse participantFields safely
-  let parsedParticipantFields = []
-  try {
-    parsedParticipantFields = JSON.parse(quiz.participantFields || "[]")
-  } catch {
-    parsedParticipantFields = []
-  }
+  const parsedParticipantFields = safeJsonParse(quiz.participantFields, [])
 
   // Transform quiz data for the form
   // Pass ISO strings - client component will format to local timezone

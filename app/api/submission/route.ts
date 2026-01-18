@@ -14,33 +14,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch quiz with correct answers and marks
+    // Fetch quiz with full question and option details
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId, isPublished: true },
-      include: {
-        questions: {
-          include: {
-            options: {
-              select: {
-                id: true,
-                isCorrect: true,
-              },
-            },
-          },
-        },
-      },
-    })
-
-    if (!quiz) {
-      return NextResponse.json(
-        { error: "Quiz not found" },
-        { status: 404 }
-      )
-    }
-
-    // Fetch full question and option details for review
-    const quizWithDetails = await prisma.quiz.findUnique({
-      where: { id: quizId },
       include: {
         questions: {
           include: {
@@ -53,13 +29,20 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    if (!quiz) {
+      return NextResponse.json(
+        { error: "Quiz not found" },
+        { status: 404 }
+      )
+    }
+
     // Calculate score based on marks
     let earnedMarks = 0
     let totalMarks = 0
     const totalQuestions = quiz.questions.length
 
     const answerRecords = answers.map((answer: { questionId: string; selectedOptionId: string }) => {
-      const question = quizWithDetails?.questions.find((q) => q.id === answer.questionId)
+      const question = quiz.questions.find((q) => q.id === answer.questionId)
       if (!question) return null
 
       const questionMarks = question.marks || 1
@@ -81,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     // Add marks for unanswered questions to total
     const answeredQuestionIds = answers.map((a: { questionId: string }) => a.questionId)
-    quizWithDetails?.questions.forEach((q) => {
+    quiz.questions.forEach((q) => {
       if (!answeredQuestionIds.includes(q.id)) {
         totalMarks += q.marks || 1
       }
@@ -93,7 +76,7 @@ export async function POST(request: NextRequest) {
     const shouldHideCorrectAnswers = showAnswersAfterDate && showAnswersAfterDate > now
 
     // Build detailed review data
-    const reviewData = quizWithDetails?.questions.map((question) => {
+    const reviewData = quiz.questions.map((question) => {
       const participantAnswer = answers.find((a: { questionId: string }) => a.questionId === question.id)
       const correctOption = question.options.find((opt) => opt.isCorrect)
       const isCorrect = participantAnswer?.selectedOptionId === correctOption?.id
@@ -113,7 +96,7 @@ export async function POST(request: NextRequest) {
         correctOptionId: shouldHideCorrectAnswers ? null : correctOption?.id || null,
         isCorrect,
       }
-    }) || []
+    })
 
     const percentage = totalMarks > 0 ? (earnedMarks / totalMarks) * 100 : 0
 
