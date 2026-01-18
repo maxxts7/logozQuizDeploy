@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import ShareLink from "@/components/quiz/ShareLink"
 import ExportButton from "@/components/quiz/ExportButton"
+import IpAttemptsManager from "@/components/quiz/IpAttemptsManager"
 import { getQuizShareUrl } from "@/constants/quizConfig"
 import { formatTimeMinutesSeconds } from "@/lib/utils/timeFormatter"
 import { formatParticipantDisplay } from "@/lib/utils/parsing"
@@ -72,6 +73,27 @@ export default async function AnalyticsPage({
     submissionsWithTime.length > 0
       ? submissionsWithTime.reduce((sum, sub) => sum + (sub.timeSpentSeconds || 0), 0) / submissionsWithTime.length
       : 0
+
+  // Calculate IP attempt counts with participant names
+  const ipAttemptMap = new Map<string, { count: number; names: Set<string> }>()
+  quiz.submissions.forEach((sub) => {
+    if (sub.ipAddress) {
+      const existing = ipAttemptMap.get(sub.ipAddress) || { count: 0, names: new Set<string>() }
+      existing.count += 1
+      const displayName = formatParticipantDisplay(sub.participantData)
+      if (displayName !== "Anonymous") {
+        existing.names.add(displayName)
+      }
+      ipAttemptMap.set(sub.ipAddress, existing)
+    }
+  })
+  const ipAttempts = Array.from(ipAttemptMap.entries())
+    .map(([ipAddress, data]) => ({
+      ipAddress,
+      attemptCount: data.count,
+      participantNames: Array.from(data.names),
+    }))
+    .sort((a, b) => b.attemptCount - a.attemptCount)
 
   return (
     <div className="px-4 py-6 max-w-7xl mx-auto">
@@ -208,6 +230,24 @@ export default async function AnalyticsPage({
           </div>
         )}
       </div>
+
+      {quiz.maxAttemptsPerIp && quiz.maxAttemptsPerIp > 0 && (
+        <div className="bg-white rounded-lg shadow overflow-hidden mt-8">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">
+              IP Attempt Management
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              This quiz limits attempts to {quiz.maxAttemptsPerIp} per IP address. Reset attempts to allow users to retake the quiz.
+            </p>
+          </div>
+          <IpAttemptsManager
+            quizId={quiz.id}
+            ipAttempts={ipAttempts}
+            maxAttemptsPerIp={quiz.maxAttemptsPerIp}
+          />
+        </div>
+      )}
 
       <div className="mt-6 flex gap-4">
         <Link
