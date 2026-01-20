@@ -1,6 +1,14 @@
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
 import LoginForm from "@/components/auth/LoginForm"
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const session = await auth()
+
+  if (session?.user) {
+    redirect("/dashboard")
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <LoginForm />

@@ -1,9 +1,44 @@
+import { Metadata } from "next"
 import { prisma } from "@/lib/db"
 import { notFound } from "next/navigation"
 import QuizTaker from "@/components/quiz/QuizTaker"
 import QuizAvailabilityMessage from "@/components/quiz/QuizAvailabilityMessage"
 import { safeJsonParse } from "@/lib/utils/parsing"
 import { getVisitorIp } from "@/lib/utils/request"
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ shareId: string }>
+}): Promise<Metadata> {
+  const { shareId } = await params
+
+  const quiz = await prisma.quiz.findUnique({
+    where: { shareId, isPublished: true },
+    select: { title: true, description: true },
+  })
+
+  if (!quiz) {
+    return { title: "Quiz Not Found" }
+  }
+
+  const description = quiz.description || `Take the "${quiz.title}" quiz now!`
+
+  return {
+    title: quiz.title,
+    description,
+    openGraph: {
+      title: quiz.title,
+      description,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: quiz.title,
+      description,
+    },
+  }
+}
 
 // Fisher-Yates shuffle algorithm
 function shuffleArray<T>(array: T[]): T[] {
