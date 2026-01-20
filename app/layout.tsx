@@ -13,7 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LogosQuiz",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  title: {
+    default: "LogosQuiz",
+    template: "%s | LogosQuiz",
+  },
   description: "Create and share quizzes with time tracking and analytics",
 };
 

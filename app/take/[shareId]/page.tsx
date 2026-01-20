@@ -23,6 +23,7 @@ export async function generateMetadata({
   }
 
   const description = quiz.description || `Take the "${quiz.title}" quiz now!`
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
   return {
     title: quiz.title,
@@ -31,6 +32,8 @@ export async function generateMetadata({
       title: quiz.title,
       description,
       type: "website",
+      url: `${baseUrl}/take/${shareId}`,
+      siteName: "LogosQuiz",
     },
     twitter: {
       card: "summary",
