@@ -1,6 +1,80 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 
+interface SubmittedAnswer {
+  questionId: string
+  selectedOptionId: string
+}
+
+interface QuestionWithOptions {
+  id: string
+  questionText: string
+  marks: number
+  options: { id: string; optionText: string; isCorrect: boolean }[]
+}
+
+interface ScoreResult {
+  earnedMarks: number
+  totalMarks: number
+  answerRecords: { questionId: string; selectedOptionId: string; isCorrect: boolean }[]
+}
+
+function calculateScore(questions: QuestionWithOptions[], answers: SubmittedAnswer[]): ScoreResult {
+  const answeredIds = new Set(answers.map((a) => a.questionId))
+  let earnedMarks = 0
+  let totalMarks = 0
+  const answerRecords: ScoreResult["answerRecords"] = []
+
+  for (const question of questions) {
+    const questionMarks = question.marks || 1
+    totalMarks += questionMarks
+
+    const answer = answers.find((a) => a.questionId === question.id)
+    if (!answer) continue
+
+    const selectedOption = question.options.find((opt) => opt.id === answer.selectedOptionId)
+    const isCorrect = selectedOption?.isCorrect ?? false
+
+    if (isCorrect) {
+      earnedMarks += questionMarks
+    }
+
+    answerRecords.push({
+      questionId: answer.questionId,
+      selectedOptionId: answer.selectedOptionId,
+      isCorrect,
+    })
+  }
+
+  return { earnedMarks, totalMarks, answerRecords }
+}
+
+function buildReviewData(
+  questions: QuestionWithOptions[],
+  answers: SubmittedAnswer[],
+  hideCorrectAnswers: boolean
+) {
+  return questions.map((question) => {
+    const participantAnswer = answers.find((a) => a.questionId === question.id)
+    const correctOption = question.options.find((opt) => opt.isCorrect)
+    const isCorrect = participantAnswer?.selectedOptionId === correctOption?.id
+
+    return {
+      questionId: question.id,
+      questionText: question.questionText,
+      marks: question.marks || 1,
+      options: question.options.map((opt) => ({
+        id: opt.id,
+        optionText: opt.optionText,
+        isCorrect: hideCorrectAnswers ? false : opt.isCorrect,
+      })),
+      selectedOptionId: participantAnswer?.selectedOptionId ?? null,
+      correctOptionId: hideCorrectAnswers ? null : (correctOption?.id ?? null),
+      isCorrect,
+    }
+  })
+}
+
 // POST /api/submission - Submit quiz answers
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +88,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Fetch quiz with full question and option details
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId, isPublished: true },
       include: {
@@ -36,68 +109,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calculate score based on marks
-    let earnedMarks = 0
-    let totalMarks = 0
     const totalQuestions = quiz.questions.length
+    const { earnedMarks, totalMarks, answerRecords } = calculateScore(quiz.questions, answers)
 
-    const answerRecords = answers.map((answer: { questionId: string; selectedOptionId: string }) => {
-      const question = quiz.questions.find((q) => q.id === answer.questionId)
-      if (!question) return null
-
-      const questionMarks = question.marks || 1
-      totalMarks += questionMarks
-
-      const selectedOption = question.options.find((opt) => opt.id === answer.selectedOptionId)
-      const isCorrect = selectedOption?.isCorrect || false
-
-      if (isCorrect) {
-        earnedMarks += questionMarks
-      }
-
-      return {
-        questionId: answer.questionId,
-        selectedOptionId: answer.selectedOptionId,
-        isCorrect,
-      }
-    }).filter((record) => record !== null)
-
-    // Add marks for unanswered questions to total
-    const answeredQuestionIds = answers.map((a: { questionId: string }) => a.questionId)
-    quiz.questions.forEach((q) => {
-      if (!answeredQuestionIds.includes(q.id)) {
-        totalMarks += q.marks || 1
-      }
-    })
-
-    // Check if correct answers should be hidden
     const now = new Date()
-    const showAnswersAfterDate = quiz.showAnswersAfter ? new Date(quiz.showAnswersAfter) : null
-    const shouldHideCorrectAnswers = showAnswersAfterDate && showAnswersAfterDate > now
+    const shouldHideCorrectAnswers = quiz.showAnswersAfter
+      ? new Date(quiz.showAnswersAfter) > now
+      : false
 
-    // Build detailed review data
-    const reviewData = quiz.questions.map((question) => {
-      const participantAnswer = answers.find((a: { questionId: string }) => a.questionId === question.id)
-      const correctOption = question.options.find((opt) => opt.isCorrect)
-      const isCorrect = participantAnswer?.selectedOptionId === correctOption?.id
-
-      return {
-        questionId: question.id,
-        questionText: question.questionText,
-        marks: question.marks || 1,
-        options: question.options.map((opt) => ({
-          id: opt.id,
-          optionText: opt.optionText,
-          // Hide isCorrect if answers should be hidden
-          isCorrect: shouldHideCorrectAnswers ? false : opt.isCorrect,
-        })),
-        selectedOptionId: participantAnswer?.selectedOptionId || null,
-        // Hide correctOptionId if answers should be hidden
-        correctOptionId: shouldHideCorrectAnswers ? null : correctOption?.id || null,
-        isCorrect,
-      }
-    })
-
+    const reviewData = buildReviewData(quiz.questions, answers, shouldHideCorrectAnswers)
     const percentage = totalMarks > 0 ? (earnedMarks / totalMarks) * 100 : 0
 
     // Save submission

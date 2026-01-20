@@ -9,6 +9,76 @@ import { getQuizShareUrl } from "@/constants/quizConfig"
 import { formatTimeMinutesSeconds } from "@/lib/utils/timeFormatter"
 import { formatParticipantDisplay } from "@/lib/utils/parsing"
 
+interface Submission {
+  id: string
+  percentage: number
+  timeSpentSeconds: number | null
+  ipAddress: string | null
+  participantData: string | null
+  submittedAt: Date
+}
+
+interface IpAttempt {
+  ipAddress: string
+  attemptCount: number
+  participantNames: string[]
+}
+
+function sortSubmissionsByRank(submissions: Submission[]): Submission[] {
+  return [...submissions].sort((a, b) => {
+    if (b.percentage !== a.percentage) {
+      return b.percentage - a.percentage
+    }
+    if (!a.timeSpentSeconds) return 1
+    if (!b.timeSpentSeconds) return -1
+    return a.timeSpentSeconds - b.timeSpentSeconds
+  })
+}
+
+function calculateAverageScore(submissions: Submission[]): number {
+  if (submissions.length === 0) return 0
+  return submissions.reduce((sum, sub) => sum + sub.percentage, 0) / submissions.length
+}
+
+function calculateAverageTime(submissions: Submission[]): number {
+  const withTime = submissions.filter((sub) => sub.timeSpentSeconds)
+  if (withTime.length === 0) return 0
+  return withTime.reduce((sum, sub) => sum + (sub.timeSpentSeconds ?? 0), 0) / withTime.length
+}
+
+function aggregateIpAttempts(submissions: Submission[]): IpAttempt[] {
+  const ipMap = new Map<string, { count: number; names: Set<string> }>()
+
+  for (const sub of submissions) {
+    if (!sub.ipAddress) continue
+
+    const existing = ipMap.get(sub.ipAddress) ?? { count: 0, names: new Set<string>() }
+    existing.count += 1
+
+    const displayName = formatParticipantDisplay(sub.participantData)
+    if (displayName !== "Anonymous") {
+      existing.names.add(displayName)
+    }
+
+    ipMap.set(sub.ipAddress, existing)
+  }
+
+  return Array.from(ipMap.entries())
+    .map(([ipAddress, data]) => ({
+      ipAddress,
+      attemptCount: data.count,
+      participantNames: Array.from(data.names),
+    }))
+    .sort((a, b) => b.attemptCount - a.attemptCount)
+}
+
+function getRankDisplay(index: number): string {
+  if (index === 0) return "🥇"
+  if (index === 1) return "🥈"
+  if (index === 2) return "🥉"
+  return `#${index + 1}`
+}
+
 export default async function AnalyticsPage({
   params,
 }: {
@@ -45,55 +115,12 @@ export default async function AnalyticsPage({
     notFound()
   }
 
-  // Sort submissions by score (desc) then by time taken (asc) for tie-breaking
-  const sortedSubmissions = [...quiz.submissions].sort((a, b) => {
-    // First compare by percentage (higher is better)
-    if (b.percentage !== a.percentage) {
-      return b.percentage - a.percentage
-    }
-    // If percentage is the same, compare by time (lower is better)
-    // Submissions without time go to the end
-    if (!a.timeSpentSeconds) return 1
-    if (!b.timeSpentSeconds) return -1
-    return a.timeSpentSeconds - b.timeSpentSeconds
-  })
-
-  const shareUrl = quiz.isPublished && quiz.shareId
-    ? getQuizShareUrl(quiz.shareId)
-    : null
-
+  const sortedSubmissions = sortSubmissionsByRank(quiz.submissions)
+  const shareUrl = quiz.isPublished && quiz.shareId ? getQuizShareUrl(quiz.shareId) : null
   const totalSubmissions = quiz.submissions.length
-  const avgScore =
-    totalSubmissions > 0
-      ? quiz.submissions.reduce((sum, sub) => sum + sub.percentage, 0) / totalSubmissions
-      : 0
-
-  const submissionsWithTime = quiz.submissions.filter((sub) => sub.timeSpentSeconds)
-  const avgTime =
-    submissionsWithTime.length > 0
-      ? submissionsWithTime.reduce((sum, sub) => sum + (sub.timeSpentSeconds || 0), 0) / submissionsWithTime.length
-      : 0
-
-  // Calculate IP attempt counts with participant names
-  const ipAttemptMap = new Map<string, { count: number; names: Set<string> }>()
-  quiz.submissions.forEach((sub) => {
-    if (sub.ipAddress) {
-      const existing = ipAttemptMap.get(sub.ipAddress) || { count: 0, names: new Set<string>() }
-      existing.count += 1
-      const displayName = formatParticipantDisplay(sub.participantData)
-      if (displayName !== "Anonymous") {
-        existing.names.add(displayName)
-      }
-      ipAttemptMap.set(sub.ipAddress, existing)
-    }
-  })
-  const ipAttempts = Array.from(ipAttemptMap.entries())
-    .map(([ipAddress, data]) => ({
-      ipAddress,
-      attemptCount: data.count,
-      participantNames: Array.from(data.names),
-    }))
-    .sort((a, b) => b.attemptCount - a.attemptCount)
+  const avgScore = calculateAverageScore(quiz.submissions)
+  const avgTime = calculateAverageTime(quiz.submissions)
+  const ipAttempts = aggregateIpAttempts(quiz.submissions)
 
   return (
     <div className="px-4 py-6 max-w-7xl mx-auto">
@@ -204,10 +231,7 @@ export default async function AnalyticsPage({
                 {sortedSubmissions.map((submission, index) => (
                   <tr key={submission.id} className={index < 3 ? "bg-yellow-50" : ""}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                      {index === 0 && "🥇"}
-                      {index === 1 && "🥈"}
-                      {index === 2 && "🥉"}
-                      {index >= 3 && `#${index + 1}`}
+                      {getRankDisplay(index)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatParticipantDisplay(submission.participantData)}

@@ -24,6 +24,31 @@ interface QuizImporterProps {
   onClose: () => void
 }
 
+function getQuestionKey(quizId: string, questionIndex: number): string {
+  return `${quizId}-${questionIndex}`
+}
+
+function getAllQuestionKeys(quizzes: QuizWithQuestions[], selectedQuizIds: Set<string>): Set<string> {
+  const keys = new Set<string>()
+  for (const quiz of quizzes) {
+    if (!selectedQuizIds.has(quiz.id)) continue
+    for (let i = 0; i < quiz.questions.length; i++) {
+      keys.add(getQuestionKey(quiz.id, i))
+    }
+  }
+  return keys
+}
+
+function toggleSetItem<T>(set: Set<T>, item: T): Set<T> {
+  const newSet = new Set(set)
+  if (newSet.has(item)) {
+    newSet.delete(item)
+  } else {
+    newSet.add(item)
+  }
+  return newSet
+}
+
 export default function QuizImporter({
   currentQuizId,
   onQuestionsImported,
@@ -61,50 +86,21 @@ export default function QuizImporter({
   }
 
   const handleQuizToggle = (quizId: string) => {
-    const newSelected = new Set(selectedQuizIds)
-    if (newSelected.has(quizId)) {
-      newSelected.delete(quizId)
-    } else {
-      newSelected.add(quizId)
-    }
-    setSelectedQuizIds(newSelected)
+    setSelectedQuizIds(toggleSetItem(selectedQuizIds, quizId))
   }
 
   const handleNextStep = () => {
-    // Pre-select all questions from selected quizzes
-    const allQuestionKeys = new Set<string>()
-    quizzes
-      .filter((quiz) => selectedQuizIds.has(quiz.id))
-      .forEach((quiz) => {
-        quiz.questions.forEach((_, qIndex) => {
-          allQuestionKeys.add(`${quiz.id}-${qIndex}`)
-        })
-      })
-    setSelectedQuestionKeys(allQuestionKeys)
+    setSelectedQuestionKeys(getAllQuestionKeys(quizzes, selectedQuizIds))
     setStep(2)
   }
 
   const handleQuestionToggle = (quizId: string, questionIndex: number) => {
-    const key = `${quizId}-${questionIndex}`
-    const newSelected = new Set(selectedQuestionKeys)
-    if (newSelected.has(key)) {
-      newSelected.delete(key)
-    } else {
-      newSelected.add(key)
-    }
-    setSelectedQuestionKeys(newSelected)
+    const key = getQuestionKey(quizId, questionIndex)
+    setSelectedQuestionKeys(toggleSetItem(selectedQuestionKeys, key))
   }
 
   const handleSelectAll = () => {
-    const allQuestionKeys = new Set<string>()
-    quizzes
-      .filter((quiz) => selectedQuizIds.has(quiz.id))
-      .forEach((quiz) => {
-        quiz.questions.forEach((_, qIndex) => {
-          allQuestionKeys.add(`${quiz.id}-${qIndex}`)
-        })
-      })
-    setSelectedQuestionKeys(allQuestionKeys)
+    setSelectedQuestionKeys(getAllQuestionKeys(quizzes, selectedQuizIds))
   }
 
   const handleDeselectAll = () => {
@@ -114,25 +110,24 @@ export default function QuizImporter({
   const handleImport = () => {
     const importedQuestions: Question[] = []
 
-    quizzes
-      .filter((quiz) => selectedQuizIds.has(quiz.id))
-      .forEach((quiz) => {
-        quiz.questions.forEach((q, qIndex) => {
-          const key = `${quiz.id}-${qIndex}`
-          if (selectedQuestionKeys.has(key)) {
-            importedQuestions.push({
-              questionText: q.questionText,
-              order: importedQuestions.length,
-              marks: q.marks,
-              options: q.options.map((opt) => ({
-                optionText: opt.optionText,
-                isCorrect: opt.isCorrect,
-                order: opt.order,
-              })),
-            })
-          }
+    for (const quiz of selectedQuizzes) {
+      for (let qIndex = 0; qIndex < quiz.questions.length; qIndex++) {
+        const key = getQuestionKey(quiz.id, qIndex)
+        if (!selectedQuestionKeys.has(key)) continue
+
+        const q = quiz.questions[qIndex]
+        importedQuestions.push({
+          questionText: q.questionText,
+          order: importedQuestions.length,
+          marks: q.marks,
+          options: q.options.map((opt) => ({
+            optionText: opt.optionText,
+            isCorrect: opt.isCorrect,
+            order: opt.order,
+          })),
         })
-      })
+      }
+    }
 
     onQuestionsImported(importedQuestions)
     onClose()
@@ -234,7 +229,7 @@ export default function QuizImporter({
                   </div>
                   <div className="divide-y divide-gray-100">
                     {quiz.questions.map((question, qIndex) => {
-                      const key = `${quiz.id}-${qIndex}`
+                      const key = getQuestionKey(quiz.id, qIndex)
                       return (
                         <label
                           key={key}

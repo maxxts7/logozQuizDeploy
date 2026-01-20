@@ -10,16 +10,34 @@ import { QUIZ_TIMING, QUESTION_CONFIG } from "@/constants/quizConfig"
 import { secondsToMinutes, minutesToSeconds } from "@/lib/utils/timeFormatter"
 import { componentStyles, cn } from "@/constants/theme"
 
-// Helper to convert ISO string to datetime-local format in user's local timezone
 function isoToDateTimeLocal(isoString: string | null | undefined): string {
   if (!isoString) return ""
   const date = new Date(isoString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${year}-${month}-${day}T${hours}:${minutes}`
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function isEmptyQuestion(question: Question): boolean {
+  return !question.questionText.trim() && question.options.every(opt => !opt.optionText.trim())
+}
+
+function validateQuestion(question: Question, index: number): string | null {
+  if (!question.questionText.trim()) {
+    return `Question ${index + 1} text is required`
+  }
+
+  const correctCount = question.options.filter(opt => opt.isCorrect).length
+  if (correctCount !== 1) {
+    return `Question ${index + 1} must have exactly one correct answer`
+  }
+
+  for (let j = 0; j < question.options.length; j++) {
+    if (!question.options[j].optionText.trim()) {
+      return `Question ${index + 1}, Option ${j + 1} text is required`
+    }
+  }
+
+  return null
 }
 
 interface QuizCreatorProps {
@@ -125,29 +143,24 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
   }
 
   const handleQuestionsImported = (importedQuestions: Question[]) => {
-    // Add imported questions to existing ones (or replace if current is just empty template)
-    const isOnlyEmptyQuestion = questions.length === 1 &&
-      !questions[0].questionText.trim() &&
-      questions[0].options.every(opt => !opt.optionText.trim())
+    const shouldReplace = questions.length === 1 && isEmptyQuestion(questions[0])
 
-    if (isOnlyEmptyQuestion) {
+    if (shouldReplace) {
       setQuestions(importedQuestions)
     } else {
       const updatedQuestions = [
         ...questions,
-        ...importedQuestions.map((q, i) => ({
-          ...q,
-          order: questions.length + i,
-        })),
+        ...importedQuestions.map((q, i) => ({ ...q, order: questions.length + i })),
       ]
       setQuestions(updatedQuestions)
     }
+
     setShowUploader(false)
     setShowQuizImporter(false)
     setError("")
   }
 
-  const validateQuiz = () => {
+  const validateQuiz = (): boolean => {
     if (!title.trim()) {
       setError("Title is required")
       return false
@@ -159,24 +172,10 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
     }
 
     for (let i = 0; i < questions.length; i++) {
-      const q = questions[i]
-
-      if (!q.questionText.trim()) {
-        setError(`Question ${i + 1} text is required`)
+      const errorMsg = validateQuestion(questions[i], i)
+      if (errorMsg) {
+        setError(errorMsg)
         return false
-      }
-
-      const correctAnswers = q.options.filter(opt => opt.isCorrect).length
-      if (correctAnswers !== 1) {
-        setError(`Question ${i + 1} must have exactly one correct answer`)
-        return false
-      }
-
-      for (let j = 0; j < q.options.length; j++) {
-        if (!q.options[j].optionText.trim()) {
-          setError(`Question ${i + 1}, Option ${j + 1} text is required`)
-          return false
-        }
       }
     }
 

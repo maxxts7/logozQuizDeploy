@@ -10,6 +10,16 @@ interface ParticipantField {
   required: boolean
 }
 
+function getOptionStyle(isCorrect: boolean, isWrong: boolean): string {
+  if (isCorrect) {
+    return "border-green-500 bg-green-100"
+  }
+  if (isWrong) {
+    return "border-red-500 bg-red-100"
+  }
+  return "border-gray-200 bg-white"
+}
+
 interface QuizTakerProps {
   quiz: {
     id: string
@@ -254,16 +264,10 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
                 <div className="ml-9 space-y-2">
                   {question.options.map((option) => {
                     const isSelected = option.id === question.selectedOptionId
-                    const isCorrect = option.isCorrect
-                    const showCorrectHighlight = !result.answersHidden && isCorrect
+                    const showCorrectHighlight = !result.answersHidden && option.isCorrect
                     const showWrongHighlight = isSelected && !question.isCorrect
-                    const showSelectedCorrect = isSelected && question.isCorrect
 
-                    const optionStyle = (showCorrectHighlight || showSelectedCorrect)
-                      ? "border-green-500 bg-green-100"
-                      : showWrongHighlight
-                        ? "border-red-500 bg-red-100"
-                        : "border-gray-200 bg-white"
+                    const optionStyle = getOptionStyle(showCorrectHighlight, showWrongHighlight)
 
                     return (
                       <div
