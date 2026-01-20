@@ -115,10 +115,10 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
   }
 
   const handleStart = () => {
-    // Validate required fields
+    // Validate all participant fields as required when they exist
     const errors: Record<string, string> = {}
     for (const field of quiz.participantFields) {
-      if (field.required && !participantData[field.label]?.trim()) {
+      if (!participantData[field.label]?.trim()) {
         errors[field.label] = `${field.label} is required`
       }
     }
@@ -333,7 +333,7 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
             {quiz.participantFields.map((field) => (
               <div key={field.label}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {field.label} {field.required && "*"}
+                  {field.label} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
