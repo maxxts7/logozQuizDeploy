@@ -225,6 +225,9 @@ export default async function AnalyticsPage({
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Submitted At
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -246,6 +249,14 @@ export default async function AnalyticsPage({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(submission.submittedAt).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <Link
+                        href={`/dashboard/quiz/${quiz.id}/submission/${submission.id}`}
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        View Answers
+                      </Link>
                     </td>
                   </tr>
                 ))}
