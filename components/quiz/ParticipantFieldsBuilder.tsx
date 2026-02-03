@@ -1,5 +1,7 @@
 "use client"
 
+import { Button, Input, Checkbox } from "@/components/ui"
+
 export interface ParticipantField {
   label: string
   required: boolean
@@ -28,52 +30,57 @@ export default function ParticipantFieldsBuilder({ fields, onChange }: Participa
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="text-sm font-medium text-slate-700">
           Participant Information Fields
         </label>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={addField}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
         >
-          + Add Field
-        </button>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add Field
+        </Button>
       </div>
 
       {fields.length === 0 ? (
-        <p className="text-sm text-gray-500 italic">
+        <p className="text-sm text-slate-500 italic py-3 px-4 bg-slate-50 rounded-lg">
           No fields configured. Participants can start the quiz immediately.
         </p>
       ) : (
         <div className="space-y-2">
           {fields.map((field, index) => (
-            <div key={index} className="flex items-center gap-3 bg-gray-50 p-3 rounded-md">
-              <input
+            <div
+              key={index}
+              className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200"
+            >
+              <Input
                 type="text"
                 value={field.label}
                 onChange={(e) => updateField(index, { label: e.target.value })}
                 placeholder="Field label (e.g., Name, Email, Student ID)"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 bg-white"
               />
-              <label className="flex items-center gap-2 text-sm text-gray-700 whitespace-nowrap">
-                <input
-                  type="checkbox"
-                  checked={field.required}
-                  onChange={(e) => updateField(index, { required: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
-                />
-                Required
-              </label>
-              <button
+              <Checkbox
+                id={`field-required-${index}`}
+                checked={field.required}
+                onChange={(e) => updateField(index, { required: e.target.checked })}
+                label="Required"
+              />
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => removeField(index)}
-                className="text-red-500 hover:text-red-700 p-1"
-                title="Remove field"
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </button>
+              </Button>
             </div>
           ))}
         </div>

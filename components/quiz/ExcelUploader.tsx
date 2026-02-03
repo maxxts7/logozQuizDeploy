@@ -3,15 +3,14 @@
 import { useRef, useState } from "react"
 import * as XLSX from "xlsx"
 import { Question } from "./QuestionBuilder"
+import { Button, Card, Alert } from "@/components/ui"
 
 interface ExcelUploaderProps {
   onQuestionsImported: (questions: Question[]) => void
 }
 
-// Valid answer indicators (1-4 or A-D)
 const ANSWER_INDICATORS = ["1", "2", "3", "4", "A", "B", "C", "D"]
 
-// Maps answer indicators to zero-based option index
 const ANSWER_INDEX_MAP: Record<string, number> = {
   "1": 0, "A": 0,
   "2": 1, "B": 1,
@@ -63,17 +62,14 @@ export default function ExcelUploader({ onQuestionsImported }: ExcelUploaderProp
       const data = await file.arrayBuffer()
       const workbook = XLSX.read(data, { type: "array" })
 
-      // Get the first sheet
       const sheetName = workbook.SheetNames[0]
       const worksheet = workbook.Sheets[sheetName]
 
-      // Convert to JSON (header: 1 returns array of arrays)
       const rows = XLSX.utils.sheet_to_json(worksheet, {
         header: 1,
         defval: "",
       }) as unknown as (string | number)[][]
 
-      // Skip header row if it looks like headers
       let startRow = 0
       if (rows.length > 0) {
         const firstCell = String(rows[0][0]).toLowerCase()
@@ -91,12 +87,11 @@ export default function ExcelUploader({ onQuestionsImported }: ExcelUploaderProp
 
       for (let i = startRow; i < rows.length; i++) {
         const row = rows[i]
-        if (!row || row.length < 3) continue // Need at least question + 2 options
+        if (!row || row.length < 3) continue
 
         const questionText = String(row[0] || "").trim()
         if (!questionText) continue
 
-        // Analyze row structure to determine format
         const lastCol = String(row[row.length - 1]).trim()
         const secondLastCol = row.length > 1 ? String(row[row.length - 2]).trim().toUpperCase() : ""
         const lastColNum = parseInt(lastCol)
@@ -107,21 +102,17 @@ export default function ExcelUploader({ onQuestionsImported }: ExcelUploaderProp
         let options: { optionText: string; isCorrect: boolean; order: number }[]
 
         if (hasMarksColumn) {
-          // Format: Question | Options... | Answer | Marks
           marks = lastColNum
           const correctIndex = getAnswerIndex(secondLastCol)
           options = buildOptions(row, 1, row.length - 2, correctIndex)
         } else if (hasAnswerIndicator) {
-          // Format: Question | Options... | Answer
           const correctIndex = getAnswerIndex(lastCol)
           options = buildOptions(row, 1, row.length - 1, correctIndex)
         } else {
-          // Format: Question | Options... (first option is correct)
           options = buildOptions(row, 1, row.length, 0)
         }
 
         if (options.length >= 2) {
-          // Ensure at least one correct answer
           if (!options.some(opt => opt.isCorrect) && options.length > 0) {
             options[0].isCorrect = true
           }
@@ -142,7 +133,6 @@ export default function ExcelUploader({ onQuestionsImported }: ExcelUploaderProp
 
       onQuestionsImported(questions)
 
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
@@ -166,44 +156,45 @@ export default function ExcelUploader({ onQuestionsImported }: ExcelUploaderProp
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, "Questions")
 
-    // Set column widths
     worksheet["!cols"] = [
-      { wch: 40 }, // Question
-      { wch: 20 }, // Option A
-      { wch: 20 }, // Option B
-      { wch: 20 }, // Option C
-      { wch: 20 }, // Option D
-      { wch: 15 }, // Correct Answer
-      { wch: 10 }, // Marks
+      { wch: 40 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 10 },
     ]
 
     XLSX.writeFile(workbook, "quiz_template.xlsx")
   }
 
   return (
-    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+    <Card className="border-2 border-dashed border-slate-300 text-center">
       <div className="mb-4">
-        <svg
-          className="mx-auto h-12 w-12 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-          />
-        </svg>
+        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto">
+          <svg
+            className="w-6 h-6 text-blue-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+            />
+          </svg>
+        </div>
       </div>
 
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-sm text-slate-600 mb-4">
         Upload an Excel file (.xlsx, .xls) with your questions
       </p>
 
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        <label className="cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 inline-flex items-center gap-2">
+        <label>
           <input
             ref={fileInputRef}
             type="file"
@@ -212,29 +203,42 @@ export default function ExcelUploader({ onQuestionsImported }: ExcelUploaderProp
             className="hidden"
             disabled={isProcessing}
           />
-          {isProcessing ? "Processing..." : "Choose File"}
+          <Button
+            type="button"
+            isLoading={isProcessing}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {isProcessing ? "Processing..." : "Choose File"}
+          </Button>
         </label>
 
-        <button
+        <Button
           type="button"
+          variant="secondary"
           onClick={downloadTemplate}
-          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md font-medium hover:bg-gray-50 inline-flex items-center gap-2"
         >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
           Download Template
-        </button>
+        </Button>
       </div>
 
       {error && (
-        <p className="mt-4 text-sm text-red-600">{error}</p>
+        <div className="mt-4">
+          <Alert variant="error">{error}</Alert>
+        </div>
       )}
 
-      <div className="mt-4 text-xs text-gray-500">
-        <p className="font-medium mb-1">Expected format:</p>
-        <p>Column A: Question text</p>
-        <p>Columns B-E: Answer options</p>
-        <p>Next column: Correct answer (A, B, C, D or 1, 2, 3, 4)</p>
-        <p>Last column (optional): Marks (default: 1)</p>
+      <div className="mt-6 pt-4 border-t border-slate-200">
+        <p className="text-xs font-medium text-slate-500 mb-2">Expected format:</p>
+        <div className="text-xs text-slate-400 space-y-0.5">
+          <p>Column A: Question text</p>
+          <p>Columns B-E: Answer options</p>
+          <p>Next column: Correct answer (A, B, C, D or 1, 2, 3, 4)</p>
+          <p>Last column (optional): Marks (default: 1)</p>
+        </div>
       </div>
-    </div>
+    </Card>
   )
 }

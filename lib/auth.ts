@@ -28,24 +28,18 @@ export const authConfig: NextAuthConfig = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        console.log("[Auth] Authorize called with email:", credentials?.email)
-
         const validated = loginSchema.safeParse(credentials)
         if (!validated.success) {
-          console.log("[Auth] Validation failed:", validated.error.issues)
           return null
         }
 
-        console.log("[Auth] Looking up user:", validated.data.email)
         const user = await prisma.user.findUnique({
           where: { email: validated.data.email }
         })
 
         if (!user) {
-          console.log("[Auth] User not found:", validated.data.email)
           return null
         }
-        console.log("[Auth] User found:", user.id)
 
         const passwordValid = await bcrypt.compare(
           validated.data.password,
@@ -53,11 +47,9 @@ export const authConfig: NextAuthConfig = {
         )
 
         if (!passwordValid) {
-          console.log("[Auth] Invalid password for user:", user.id)
           return null
         }
 
-        console.log("[Auth] Login successful for user:", user.id)
         return {
           id: user.id,
           email: user.email,

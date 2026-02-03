@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
+import { safeJsonParse, parseParticipantData } from "@/lib/utils/parsing"
 import * as XLSX from "xlsx"
 
 // GET /api/quiz/[quizId]/export - Export quiz submissions as Excel
@@ -43,23 +44,12 @@ export async function GET(
     }
 
     // Parse participant fields to get column headers
-    let participantFieldLabels: string[] = []
-    try {
-      const fields = JSON.parse(quiz.participantFields || "[]")
-      participantFieldLabels = fields.map((f: { label: string }) => f.label)
-    } catch {
-      participantFieldLabels = []
-    }
+    const fields = safeJsonParse<{ label: string }[]>(quiz.participantFields, [])
+    const participantFieldLabels = fields.map((f) => f.label)
 
     // Build Excel data
     const rows = quiz.submissions.map((submission, index) => {
-      // Parse participant data
-      let participantData: Record<string, string> = {}
-      try {
-        participantData = JSON.parse(submission.participantData || "{}")
-      } catch {
-        participantData = {}
-      }
+      const participantData = parseParticipantData(submission.participantData)
 
       // Build row with rank and participant fields first
       const row: Record<string, string | number> = {

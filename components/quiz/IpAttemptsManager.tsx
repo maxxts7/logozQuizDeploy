@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Button, Badge, Alert } from "@/components/ui"
 
 interface IpAttempt {
   ipAddress: string
@@ -56,8 +57,13 @@ export default function IpAttemptsManager({
 
   if (ipAttempts.length === 0) {
     return (
-      <div className="px-6 py-8 text-center">
-        <p className="text-gray-500">No IP attempt data available</p>
+      <div className="px-6 py-12 text-center">
+        <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+          <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+        <p className="text-slate-500">No IP attempt data available</p>
       </div>
     )
   }
@@ -65,69 +71,66 @@ export default function IpAttemptsManager({
   return (
     <div>
       {error && (
-        <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
-          {error}
+        <div className="mx-6 mt-4">
+          <Alert variant="error">{error}</Alert>
         </div>
       )}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full">
+          <thead className="bg-slate-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                 IP Address
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                 Participant
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                 Attempts
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
                 Action
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-slate-100">
             {ipAttempts.map((item) => {
               const isAtLimit = maxAttemptsPerIp && item.attemptCount >= maxAttemptsPerIp
               return (
-                <tr key={item.ipAddress}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                <tr key={item.ipAddress} className="hover:bg-slate-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-slate-700">
                     {item.ipAddress}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                  <td className="px-6 py-4 text-sm text-slate-900 max-w-xs">
                     {item.participantNames.length > 0
                       ? item.participantNames.join(", ")
-                      : <span className="text-gray-400">Anonymous</span>}
+                      : <span className="text-slate-400">Anonymous</span>}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                     {item.attemptCount}
                     {maxAttemptsPerIp && (
-                      <span className="text-gray-500"> / {maxAttemptsPerIp}</span>
+                      <span className="text-slate-400"> / {maxAttemptsPerIp}</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {isAtLimit ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        Limit Reached
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Active
-                      </span>
-                    )}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Badge variant={isAtLimit ? "error" : "success"}>
+                      {isAtLimit ? "Limit Reached" : "Active"}
+                    </Badge>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                    <button
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <Button
                       onClick={() => handleReset(item.ipAddress)}
                       disabled={resetting === item.ipAddress}
-                      className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      isLoading={resetting === item.ipAddress}
                     >
                       {resetting === item.ipAddress ? "Resetting..." : "Reset"}
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               )

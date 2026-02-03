@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db"
 import { createQuizSchema } from "@/lib/validations/quiz"
 
 // GET /api/quiz - List all quizzes for authenticated user
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth()
 

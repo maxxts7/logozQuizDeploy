@@ -20,7 +20,6 @@ interface ScoreResult {
 }
 
 function calculateScore(questions: QuestionWithOptions[], answers: SubmittedAnswer[]): ScoreResult {
-  const answeredIds = new Set(answers.map((a) => a.questionId))
   let earnedMarks = 0
   let totalMarks = 0
   const answerRecords: ScoreResult["answerRecords"] = []

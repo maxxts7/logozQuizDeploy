@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui"
 
 interface DeleteQuizButtonProps {
   quizId: string
@@ -37,10 +38,12 @@ export default function DeleteQuizButton({ quizId, quizTitle }: DeleteQuizButton
   }
 
   return (
-    <button
+    <Button
       onClick={handleDelete}
       disabled={isDeleting}
-      className="inline-flex items-center justify-center p-2 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+      variant="ghost"
+      size="sm"
+      className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2"
       title="Delete quiz"
     >
       <svg
@@ -56,6 +59,6 @@ export default function DeleteQuizButton({ quizId, quizTitle }: DeleteQuizButton
           d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
         />
       </svg>
-    </button>
+    </Button>
   )
 }

@@ -8,7 +8,7 @@ import ExcelUploader from "./ExcelUploader"
 import QuizImporter from "./QuizImporter"
 import { QUIZ_TIMING, QUESTION_CONFIG } from "@/constants/quizConfig"
 import { secondsToMinutes, minutesToSeconds } from "@/lib/utils/timeFormatter"
-import { componentStyles, cn } from "@/constants/theme"
+import { Button, Input, Textarea, Label, Alert, Card, Checkbox } from "@/components/ui"
 
 function isoToDateTimeLocal(isoString: string | null | undefined): string {
   if (!isoString) return ""
@@ -46,14 +46,14 @@ interface QuizCreatorProps {
     title: string
     description?: string | null
     timeLimitSeconds?: number | null
-    availableFromISO?: string | null  // ISO string from server
-    availableUntilISO?: string | null // ISO string from server
+    availableFromISO?: string | null
+    availableUntilISO?: string | null
     isPublished: boolean
     participantFields?: ParticipantField[]
     randomizeQuestions?: boolean
     randomizeOptions?: boolean
     maxAttemptsPerIp?: number | null
-    showAnswersAfterISO?: string | null // ISO string from server
+    showAnswersAfterISO?: string | null
     questions: Question[]
   }
   isEdit?: boolean
@@ -95,7 +95,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
       marks: 1,
       options: Array.from({ length: QUESTION_CONFIG.DEFAULT_OPTIONS_COUNT }, (_, i) => ({
         optionText: "",
-        isCorrect: i === 0, // First option is correct by default
+        isCorrect: i === 0,
         order: i,
       })),
     }
@@ -117,7 +117,6 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
       return
     }
     const newQuestions = questions.filter((_, i) => i !== index)
-    // Update order
     setQuestions(newQuestions.map((q, i) => ({ ...q, order: i })))
   }
 
@@ -133,7 +132,6 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
         order: opt.order,
       })),
     }
-    // Insert after the current question and update orders
     const newQuestions = [
       ...questions.slice(0, index + 1),
       duplicatedQuestion,
@@ -237,7 +235,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
 
       router.push("/dashboard")
       router.refresh()
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
@@ -246,173 +244,126 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-6">
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
+      {/* Quiz Settings Card */}
+      <Card>
+        <h2 className="text-xl font-semibold text-slate-900 mb-6">
           {isEdit ? "Edit Quiz" : "Create New Quiz"}
         </h2>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-              Quiz Title *
-            </label>
-            <input
+            <Label htmlFor="title" required>Quiz Title</Label>
+            <Input
               id="title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g., General Knowledge Quiz"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-              Description (optional)
-            </label>
-            <textarea
+            <Label htmlFor="description">Description (optional)</Label>
+            <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Brief description of your quiz"
               rows={3}
             />
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center">
-              <input
-                id="hasTimeLimit"
-                type="checkbox"
-                checked={hasTimeLimit}
-                onChange={(e) => setHasTimeLimit(e.target.checked)}
-                className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
-              />
-              <label htmlFor="hasTimeLimit" className="ml-2 text-sm font-medium text-gray-700">
-                Set time limit
-              </label>
-            </div>
-
+          {/* Time Limit */}
+          <div className="flex items-start gap-4">
+            <Checkbox
+              id="hasTimeLimit"
+              checked={hasTimeLimit}
+              onChange={(e) => setHasTimeLimit(e.target.checked)}
+              label="Set time limit"
+            />
             {hasTimeLimit && (
               <div className="flex items-center gap-2">
-                <input
+                <Input
                   type="number"
                   value={timeLimitMinutes}
                   onChange={(e) => setTimeLimitMinutes(parseInt(e.target.value) || 0)}
-                  className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-20"
                   min="1"
                   required={hasTimeLimit}
                 />
-                <span className="text-sm text-gray-700">minutes</span>
+                <span className="text-sm text-slate-600">minutes</span>
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center">
-              <input
-                id="hasTimeWindow"
-                type="checkbox"
-                checked={hasTimeWindow}
-                onChange={(e) => setHasTimeWindow(e.target.checked)}
-                className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
-              />
-              <label htmlFor="hasTimeWindow" className="ml-2 text-sm font-medium text-gray-700">
-                Set availability window
-              </label>
-            </div>
-
+          {/* Time Window */}
+          <div className="space-y-3">
+            <Checkbox
+              id="hasTimeWindow"
+              checked={hasTimeWindow}
+              onChange={(e) => setHasTimeWindow(e.target.checked)}
+              label="Set availability window"
+            />
             {hasTimeWindow && (
-              <div className="ml-6 space-y-3">
+              <div className="ml-6 space-y-3 p-4 bg-slate-50 rounded-lg">
                 <div>
-                  <label htmlFor="availableFrom" className="block text-sm font-medium text-gray-700 mb-1">
-                    Available from
-                  </label>
-                  <input
+                  <Label htmlFor="availableFrom">Available from</Label>
+                  <Input
                     id="availableFrom"
                     type="datetime-local"
                     value={availableFrom}
                     onChange={(e) => setAvailableFrom(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label htmlFor="availableUntil" className="block text-sm font-medium text-gray-700 mb-1">
-                    Available until
-                  </label>
-                  <input
+                  <Label htmlFor="availableUntil">Available until</Label>
+                  <Input
                     id="availableUntil"
                     type="datetime-local"
                     value={availableUntil}
                     onChange={(e) => setAvailableUntil(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
             )}
           </div>
 
-          <div className="flex items-center">
-            <input
-              id="isPublished"
-              type="checkbox"
-              checked={isPublished}
-              onChange={(e) => setIsPublished(e.target.checked)}
-              className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+          {/* Publish */}
+          <Checkbox
+            id="isPublished"
+            checked={isPublished}
+            onChange={(e) => setIsPublished(e.target.checked)}
+            label="Publish immediately (quiz will be accessible via share link)"
+          />
+
+          {/* Randomization */}
+          <Checkbox
+            id="randomizeQuestions"
+            checked={randomizeQuestions}
+            onChange={(e) => setRandomizeQuestions(e.target.checked)}
+            label="Randomize question order for each participant"
+          />
+
+          <Checkbox
+            id="randomizeOptions"
+            checked={randomizeOptions}
+            onChange={(e) => setRandomizeOptions(e.target.checked)}
+            label="Randomize answer options for each question"
+          />
+
+          {/* IP Limit */}
+          <div className="space-y-3">
+            <Checkbox
+              id="hasIpLimit"
+              checked={hasIpLimit}
+              onChange={(e) => setHasIpLimit(e.target.checked)}
+              label="Limit attempts per IP address"
             />
-            <label htmlFor="isPublished" className="ml-2 text-sm font-medium text-gray-700">
-              Publish immediately (quiz will be accessible via share link)
-            </label>
-          </div>
-
-          <div className="flex items-center">
-            <input
-              id="randomizeQuestions"
-              type="checkbox"
-              checked={randomizeQuestions}
-              onChange={(e) => setRandomizeQuestions(e.target.checked)}
-              className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
-            />
-            <label htmlFor="randomizeQuestions" className="ml-2 text-sm font-medium text-gray-700">
-              Randomize question order for each participant
-            </label>
-          </div>
-
-          <div className="flex items-center">
-            <input
-              id="randomizeOptions"
-              type="checkbox"
-              checked={randomizeOptions}
-              onChange={(e) => setRandomizeOptions(e.target.checked)}
-              className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
-            />
-            <label htmlFor="randomizeOptions" className="ml-2 text-sm font-medium text-gray-700">
-              Randomize answer options for each question
-            </label>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center">
-              <input
-                id="hasIpLimit"
-                type="checkbox"
-                checked={hasIpLimit}
-                onChange={(e) => setHasIpLimit(e.target.checked)}
-                className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
-              />
-              <label htmlFor="hasIpLimit" className="ml-2 text-sm font-medium text-gray-700">
-                Limit attempts per IP address
-              </label>
-            </div>
-
             {hasIpLimit && (
               <div className="ml-6 flex items-center gap-2">
-                <label htmlFor="maxAttemptsPerIp" className="text-sm font-medium text-gray-700">
-                  Maximum attempts:
-                </label>
-                <input
+                <Label htmlFor="maxAttemptsPerIp" className="mb-0">Maximum attempts:</Label>
+                <Input
                   id="maxAttemptsPerIp"
                   type="number"
                   value={maxAttemptsPerIp || ""}
@@ -427,86 +378,80 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
                       }
                     }
                   }}
-                  onBlur={(e) => {
-                    // Ensure minimum of 1 when leaving the field
+                  onBlur={() => {
                     if (!maxAttemptsPerIp || maxAttemptsPerIp < 1) {
                       setMaxAttemptsPerIp(1)
                     }
                   }}
-                  className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-20"
                   min="1"
                 />
-                <span className="text-sm text-gray-500">per IP address</span>
+                <span className="text-sm text-slate-500">per IP address</span>
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center">
-              <input
-                id="hasAnswerRevealWindow"
-                type="checkbox"
-                checked={hasAnswerRevealWindow}
-                onChange={(e) => setHasAnswerRevealWindow(e.target.checked)}
-                className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
-              />
-              <label htmlFor="hasAnswerRevealWindow" className="ml-2 text-sm font-medium text-gray-700">
-                Delay showing correct answers until a specific time
-              </label>
-            </div>
-
+          {/* Answer Reveal Window */}
+          <div className="space-y-3">
+            <Checkbox
+              id="hasAnswerRevealWindow"
+              checked={hasAnswerRevealWindow}
+              onChange={(e) => setHasAnswerRevealWindow(e.target.checked)}
+              label="Delay showing correct answers until a specific time"
+            />
             {hasAnswerRevealWindow && (
-              <div className="ml-6 space-y-2">
-                <p className="text-sm text-gray-500">
+              <div className="ml-6 space-y-3 p-4 bg-slate-50 rounded-lg">
+                <p className="text-sm text-slate-500">
                   Until this time, participants will only see which questions they got wrong, not the correct answers.
                 </p>
                 <div>
-                  <label htmlFor="showAnswersAfter" className="block text-sm font-medium text-gray-700 mb-1">
-                    Show correct answers after
-                  </label>
-                  <input
+                  <Label htmlFor="showAnswersAfter">Show correct answers after</Label>
+                  <Input
                     id="showAnswersAfter"
                     type="datetime-local"
                     value={showAnswersAfter}
                     onChange={(e) => setShowAnswersAfter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
             )}
           </div>
 
+          {/* Participant Fields */}
           <ParticipantFieldsBuilder
             fields={participantFields}
             onChange={setParticipantFields}
           />
         </div>
-      </div>
+      </Card>
 
+      {/* Questions Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-gray-900">Questions</h3>
+          <h3 className="text-xl font-semibold text-slate-900">Questions</h3>
           <div className="flex gap-2">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setShowQuizImporter(true)}
-              className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md flex items-center gap-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               Import from Quiz
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setShowUploader(!showUploader)}
-              className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md flex items-center gap-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
               Import from Excel
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -528,35 +473,39 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
         <button
           type="button"
           onClick={addQuestion}
-          className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 font-medium"
+          className="w-full py-4 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 font-medium transition-all duration-150"
         >
           + Add Question
         </button>
       </div>
 
+      {/* Error */}
       {error && (
-        <div className={componentStyles.alert.error}>
-          {error}
-        </div>
+        <Alert variant="error">{error}</Alert>
       )}
 
+      {/* Actions */}
       <div className="flex gap-4">
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="lg"
+          className="flex-1"
           onClick={() => router.back()}
-          className={cn("flex-1 px-6 py-3 rounded-md font-medium", componentStyles.button.secondary)}
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
-          disabled={isLoading}
-          className={cn("flex-1 px-6 py-3 rounded-md font-medium", componentStyles.button.primary, componentStyles.button.disabled)}
+          size="lg"
+          className="flex-1"
+          isLoading={isLoading}
         >
           {isLoading ? "Saving..." : isEdit ? "Update Quiz" : "Create Quiz"}
-        </button>
+        </Button>
       </div>
 
+      {/* Quiz Importer Modal */}
       {showQuizImporter && (
         <QuizImporter
           currentQuizId={initialData?.id}

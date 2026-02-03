@@ -4,19 +4,8 @@ import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { formatTimeMinutesSeconds } from "@/lib/utils/timeFormatter"
 import { formatParticipantDisplay } from "@/lib/utils/parsing"
-
-function getOptionStyle(isSelected: boolean, isCorrect: boolean): string {
-  if (isSelected && isCorrect) {
-    return "border-green-500 bg-green-100"
-  }
-  if (isSelected && !isCorrect) {
-    return "border-red-500 bg-red-100"
-  }
-  if (isCorrect) {
-    return "border-green-500 bg-green-50"
-  }
-  return "border-gray-200 bg-white"
-}
+import { getOptionStyle } from "@/lib/utils/styles"
+import { Button, Card, Badge } from "@/components/ui"
 
 export default async function SubmissionDetailPage({
   params,
@@ -58,78 +47,79 @@ export default async function SubmissionDetailPage({
   const participantName = formatParticipantDisplay(submission.participantData)
 
   return (
-    <div className="px-4 py-6 max-w-4xl mx-auto">
-      <div className="mb-6">
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div>
         <Link
           href={`/dashboard/quiz/${quizId}/analytics`}
-          className="text-sm text-blue-600 hover:text-blue-800 mb-2 inline-block"
+          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 transition-colors mb-4"
         >
-          ← Back to Analytics
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Analytics
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900">Submission Details</h1>
-        <p className="mt-2 text-gray-600">
-          Viewing answers for <span className="font-semibold">{participantName}</span>
+        <h1 className="text-2xl font-bold text-slate-900">Submission Details</h1>
+        <p className="mt-1 text-slate-500">
+          Viewing answers for <span className="font-semibold text-slate-700">{participantName}</span>
         </p>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats Card */}
+      <Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Score</h3>
-            <p className="mt-1 text-2xl font-semibold text-gray-900">
+            <p className="text-sm text-slate-500 mb-1">Score</p>
+            <p className="text-2xl font-bold text-slate-900">
               {Math.round(submission.percentage)}%
             </p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Marks</h3>
-            <p className="mt-1 text-2xl font-semibold text-gray-900">
+            <p className="text-sm text-slate-500 mb-1">Marks</p>
+            <p className="text-2xl font-bold text-slate-900">
               {submission.score} / {submission.totalMarks}
             </p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Time Taken</h3>
-            <p className="mt-1 text-2xl font-semibold text-gray-900">
+            <p className="text-sm text-slate-500 mb-1">Time Taken</p>
+            <p className="text-2xl font-bold text-slate-900">
               {submission.timeSpentSeconds
                 ? formatTimeMinutesSeconds(submission.timeSpentSeconds)
                 : "N/A"}
             </p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Submitted</h3>
-            <p className="mt-1 text-lg font-semibold text-gray-900">
+            <p className="text-sm text-slate-500 mb-1">Submitted</p>
+            <p className="text-lg font-semibold text-slate-900">
               {new Date(submission.submittedAt).toLocaleString()}
             </p>
           </div>
         </div>
-      </div>
+      </Card>
 
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900">Answers</h2>
+      {/* Answers */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900">Answers</h2>
 
         {submission.quiz.questions.map((question, index) => {
           const answer = submission.answers.find((a) => a.questionId === question.id)
           const isCorrect = answer?.isCorrect ?? false
 
           return (
-            <div
+            <Card
               key={question.id}
-              className={`bg-white rounded-lg shadow p-6 border-l-4 ${
-                isCorrect ? "border-l-green-500" : "border-l-red-500"
+              className={`border-l-4 ${
+                isCorrect ? "border-l-emerald-500" : "border-l-red-500"
               }`}
             >
-              <div className="flex items-start justify-between gap-3 mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {index + 1}. {question.questionText}
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <h3 className="text-base font-semibold text-slate-900">
+                  <span className="text-slate-400 mr-2">{index + 1}.</span>
+                  {question.questionText}
                 </h3>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    isCorrect
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
+                <Badge variant={isCorrect ? "success" : "error"}>
                   {isCorrect ? "Correct" : "Incorrect"}
-                </span>
+                </Badge>
               </div>
 
               <div className="space-y-2">
@@ -143,15 +133,15 @@ export default async function SubmissionDetailPage({
                       className={`p-3 rounded-lg border-2 ${optionStyle}`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-900">{option.optionText}</span>
+                        <span className="text-slate-900">{option.optionText}</span>
                         <div className="flex items-center gap-2">
                           {isSelected && (
-                            <span className="text-sm font-medium text-gray-600">
+                            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                               Selected
                             </span>
                           )}
                           {option.isCorrect && (
-                            <span className="text-sm font-medium text-green-600">
+                            <span className="text-xs font-medium text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">
                               Correct Answer
                             </span>
                           )}
@@ -163,21 +153,24 @@ export default async function SubmissionDetailPage({
               </div>
 
               {!answer && (
-                <p className="mt-3 text-sm text-gray-500 italic">
+                <p className="mt-4 text-sm text-slate-500 italic">
                   No answer submitted for this question
                 </p>
               )}
-            </div>
+            </Card>
           )
         })}
       </div>
 
-      <div className="mt-8">
-        <Link
-          href={`/dashboard/quiz/${quizId}/analytics`}
-          className="px-4 py-2 bg-gray-600 text-white rounded-md font-medium hover:bg-gray-700"
-        >
-          Back to Analytics
+      {/* Back Button */}
+      <div>
+        <Link href={`/dashboard/quiz/${quizId}/analytics`}>
+          <Button variant="secondary">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Analytics
+          </Button>
         </Link>
       </div>
     </div>
