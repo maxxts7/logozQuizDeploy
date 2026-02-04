@@ -55,12 +55,12 @@ export default function QuestionBuilder({
   return (
     <Card>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5 pb-4 border-b border-slate-100">
-        <div className="flex items-center gap-3">
-          <span className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-sm font-semibold">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-5 pb-3 sm:pb-4 border-b border-slate-100">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-xs sm:text-sm font-semibold">
             {questionIndex + 1}
           </span>
-          <h3 className="text-base font-semibold text-slate-900">
+          <h3 className="text-sm sm:text-base font-semibold text-slate-900">
             Question {questionIndex + 1}
           </h3>
         </div>
@@ -104,7 +104,7 @@ export default function QuestionBuilder({
         </div>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-4 sm:space-y-5">
         {/* Question Text */}
         <div>
           <Label>Question Text</Label>
@@ -120,11 +120,11 @@ export default function QuestionBuilder({
         {/* Options */}
         <div>
           <Label>Answer Options (select the correct one)</Label>
-          <div className="space-y-2.5 mt-2">
+          <div className="space-y-2 mt-2">
             {question.options.map((option, optIndex) => (
               <label
                 key={optIndex}
-                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all duration-150 ${
+                className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all duration-150 ${
                   option.isCorrect
                     ? "border-emerald-300 bg-emerald-50"
                     : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
@@ -135,7 +135,7 @@ export default function QuestionBuilder({
                   name={`correct-answer-${questionIndex}`}
                   checked={option.isCorrect}
                   onChange={() => handleCorrectAnswerChange(optIndex)}
-                  className="w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500"
+                  className="flex-shrink-0 w-4 h-4 text-emerald-600 border-slate-300 focus:ring-emerald-500"
                   required
                 />
                 <div className="flex-1 relative">

@@ -201,8 +201,8 @@ export default async function TakeQuizPage({
                   )}
 
                   {/* Previous Answers */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-slate-900">Your Answers</h3>
+                  <div className="space-y-3 sm:space-y-4">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-900">Your Answers</h3>
                     {lastSubmission.quiz.questions.map((question, index) => {
                       const answer = lastSubmission.answers.find((a) => a.questionId === question.id)
                       const isCorrect = answer?.isCorrect ?? false
@@ -211,13 +211,13 @@ export default async function TakeQuizPage({
                       return (
                         <Card
                           key={question.id}
-                          className={`border-l-4 ${
+                          className={`border-l-4 !p-3 sm:!p-6 ${
                             wasSkipped ? "border-l-slate-300" : isCorrect ? "border-l-emerald-500" : "border-l-red-500"
                           }`}
                         >
-                          <div className="flex items-start justify-between gap-4 mb-4">
-                            <h4 className="text-base font-semibold text-slate-900">
-                              <span className="text-slate-400 mr-2">{index + 1}.</span>
+                          <div className="flex items-start justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
+                            <h4 className="text-sm sm:text-base font-semibold text-slate-900">
+                              <span className="text-slate-400 mr-1 sm:mr-2">{index + 1}.</span>
                               {question.questionText}
                             </h4>
                             <Badge variant={wasSkipped ? "default" : isCorrect ? "success" : "error"}>
@@ -241,18 +241,18 @@ export default async function TakeQuizPage({
                               return (
                                 <div
                                   key={option.id}
-                                  className={`p-3 rounded-lg border ${optionStyle}`}
+                                  className={`p-2.5 sm:p-3 rounded-lg border ${optionStyle}`}
                                 >
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-slate-900">{option.optionText}</span>
-                                    <div className="flex items-center gap-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm sm:text-base text-slate-900">{option.optionText}</span>
+                                    <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                                       {isSelected && (
-                                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-1.5 sm:px-2 py-0.5 rounded">
                                           Your answer
                                         </span>
                                       )}
                                       {showCorrect && option.isCorrect && (
-                                        <span className="text-xs font-medium text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">
+                                        <span className="text-xs font-medium text-emerald-600 bg-emerald-100 px-1.5 sm:px-2 py-0.5 rounded">
                                           Correct
                                         </span>
                                       )}

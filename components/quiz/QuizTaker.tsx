@@ -298,30 +298,30 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
             </Alert>
           )}
 
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {result.review.map((question, index) => (
               <div
                 key={question.questionId}
-                className={`p-5 rounded-xl border ${
+                className={`p-3 sm:p-5 rounded-xl border ${
                   question.isCorrect
                     ? "border-emerald-200 bg-emerald-50/50"
                     : "border-red-200 bg-red-50/50"
                 }`}
               >
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="flex items-start gap-3">
+                <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <div className="flex items-start gap-2 sm:gap-3">
                     <span
-                      className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold ${
+                      className={`flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold ${
                         question.isCorrect ? "bg-emerald-500" : "bg-red-500"
                       }`}
                     >
                       {question.isCorrect ? "✓" : "✗"}
                     </span>
-                    <h3 className="text-base font-semibold text-slate-900">
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900">
                       {index + 1}. {question.questionText}
                     </h3>
                   </div>
-                  <span className={`text-sm font-medium px-2.5 py-1 rounded-lg ${
+                  <span className={`text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg whitespace-nowrap ${
                     question.isCorrect
                       ? "bg-emerald-100 text-emerald-700"
                       : "bg-red-100 text-red-700"
@@ -330,7 +330,7 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
                   </span>
                 </div>
 
-                <div className="ml-10 space-y-2">
+                <div className="ml-8 sm:ml-10 space-y-2">
                   {question.options.map((option) => {
                     const isSelected = option.id === question.selectedOptionId
                     const showCorrectHighlight = !result.answersHidden && option.isCorrect
@@ -341,18 +341,18 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
                     return (
                       <div
                         key={option.id}
-                        className={`p-3 rounded-lg border ${optionStyle}`}
+                        className={`p-2.5 sm:p-3 rounded-lg border ${optionStyle}`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-900">{option.optionText}</span>
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm sm:text-base text-slate-900">{option.optionText}</span>
+                          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                             {isSelected && (
-                              <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                              <span className="text-xs font-medium text-slate-500 bg-slate-100 px-1.5 sm:px-2 py-0.5 rounded">
                                 Your answer
                               </span>
                             )}
                             {showCorrectHighlight && (
-                              <span className="text-xs font-medium text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded">
+                              <span className="text-xs font-medium text-emerald-600 bg-emerald-100 px-1.5 sm:px-2 py-0.5 rounded">
                                 Correct
                               </span>
                             )}
