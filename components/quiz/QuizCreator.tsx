@@ -274,13 +274,19 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
             />
           </div>
 
-          {/* Time Limit */}
+          {/* Participant Fields */}
+          <ParticipantFieldsBuilder
+            fields={participantFields}
+            onChange={setParticipantFields}
+          />
+
+          {/* Test Duration */}
           <div className="flex items-start gap-4">
             <Checkbox
               id="hasTimeLimit"
               checked={hasTimeLimit}
               onChange={(e) => setHasTimeLimit(e.target.checked)}
-              label="Set time limit"
+              label="Set test duration"
             />
             {hasTimeLimit && (
               <div className="flex items-center gap-2">
@@ -297,18 +303,18 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
             )}
           </div>
 
-          {/* Time Window */}
+          {/* Opening and Closing Time */}
           <div className="space-y-3">
             <Checkbox
               id="hasTimeWindow"
               checked={hasTimeWindow}
               onChange={(e) => setHasTimeWindow(e.target.checked)}
-              label="Set availability window"
+              label="Set opening and closing time"
             />
             {hasTimeWindow && (
               <div className="ml-6 space-y-3 p-4 bg-slate-50 rounded-lg">
                 <div>
-                  <Label htmlFor="availableFrom">Available from</Label>
+                  <Label htmlFor="availableFrom">Opens at</Label>
                   <Input
                     id="availableFrom"
                     type="datetime-local"
@@ -317,7 +323,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
                   />
                 </div>
                 <div>
-                  <Label htmlFor="availableUntil">Available until</Label>
+                  <Label htmlFor="availableUntil">Closes at</Label>
                   <Input
                     id="availableUntil"
                     type="datetime-local"
@@ -337,28 +343,28 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
             label="Publish immediately (quiz will be accessible via share link)"
           />
 
-          {/* Randomization */}
+          {/* Shuffle Options */}
           <Checkbox
             id="randomizeQuestions"
             checked={randomizeQuestions}
             onChange={(e) => setRandomizeQuestions(e.target.checked)}
-            label="Randomize question order for each participant"
+            label="Shuffle question order for each participant"
           />
 
           <Checkbox
             id="randomizeOptions"
             checked={randomizeOptions}
             onChange={(e) => setRandomizeOptions(e.target.checked)}
-            label="Randomize answer options for each question"
+            label="Shuffle answer options for each question"
           />
 
-          {/* IP Limit */}
+          {/* Attempt Limit */}
           <div className="space-y-3">
             <Checkbox
               id="hasIpLimit"
               checked={hasIpLimit}
               onChange={(e) => setHasIpLimit(e.target.checked)}
-              label="Limit attempts per IP address"
+              label="Limit number of attempts"
             />
             {hasIpLimit && (
               <div className="ml-6 flex items-center gap-2">
@@ -386,18 +392,17 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
                   className="w-20"
                   min="1"
                 />
-                <span className="text-sm text-slate-500">per IP address</span>
               </div>
             )}
           </div>
 
-          {/* Answer Reveal Window */}
+          {/* Show Answers After Quiz Ends */}
           <div className="space-y-3">
             <Checkbox
               id="hasAnswerRevealWindow"
               checked={hasAnswerRevealWindow}
               onChange={(e) => setHasAnswerRevealWindow(e.target.checked)}
-              label="Delay showing correct answers until a specific time"
+              label="Show answers after quiz ends"
             />
             {hasAnswerRevealWindow && (
               <div className="ml-6 space-y-3 p-4 bg-slate-50 rounded-lg">
@@ -405,7 +410,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
                   Until this time, participants will only see which questions they got wrong, not the correct answers.
                 </p>
                 <div>
-                  <Label htmlFor="showAnswersAfter">Show correct answers after</Label>
+                  <Label htmlFor="showAnswersAfter">Show after</Label>
                   <Input
                     id="showAnswersAfter"
                     type="datetime-local"
@@ -416,12 +421,6 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
               </div>
             )}
           </div>
-
-          {/* Participant Fields */}
-          <ParticipantFieldsBuilder
-            fields={participantFields}
-            onChange={setParticipantFields}
-          />
         </div>
       </Card>
 
