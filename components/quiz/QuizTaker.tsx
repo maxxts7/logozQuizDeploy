@@ -511,38 +511,38 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
       <div className="h-28" />
 
       {/* Quiz Content */}
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
           {quiz.questions.map((question, qIndex) => {
             const isAnswered = !!answers[question.id]
             return (
               <div
                 key={question.id}
-                className={`p-5 rounded-xl border transition-colors duration-200 ${
+                className={`p-3 sm:p-5 rounded-xl border transition-colors duration-200 ${
                   isAnswered
                     ? "border-emerald-200 bg-emerald-50/30"
                     : "border-slate-200 bg-white"
                 }`}
               >
-                <div className="flex items-start gap-3 mb-4">
-                  <span className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <span className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs sm:text-sm font-bold ${
                     isAnswered
                       ? "bg-emerald-500 text-white"
                       : "bg-blue-100 text-blue-600"
                   }`}>
                     {qIndex + 1}
                   </span>
-                  <h3 className="text-base font-semibold text-slate-900 pt-1">
+                  <h3 className="text-sm sm:text-base font-semibold text-slate-900 pt-0.5 sm:pt-1">
                     {question.questionText}
                   </h3>
                 </div>
 
-                <div className="ml-11 space-y-2.5">
+                <div className="ml-9 sm:ml-11 space-y-2">
                   {question.options.map((option) => {
                     const isSelected = answers[question.id] === option.id
                     return (
                       <label
                         key={option.id}
-                        className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-all duration-150 ${
+                        className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3.5 rounded-lg border cursor-pointer transition-all duration-150 ${
                           isSelected
                             ? "border-blue-500 bg-blue-50 shadow-sm shadow-blue-100"
                             : "border-slate-200 hover:border-blue-300 hover:bg-blue-50/50"
@@ -565,7 +565,7 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
                           onChange={() => handleAnswerSelect(question.id, option.id)}
                           className="sr-only"
                         />
-                        <span className={`${isSelected ? "text-slate-900 font-medium" : "text-slate-700"}`}>
+                        <span className={`text-sm sm:text-base ${isSelected ? "text-slate-900 font-medium" : "text-slate-700"}`}>
                           {option.optionText}
                         </span>
                       </label>
