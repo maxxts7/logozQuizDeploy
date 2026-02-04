@@ -42,14 +42,6 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
     earnedMarks: number
     totalMarks: number
     skippedCount: number
-    previousAttempts: {
-      id: string
-      score: number
-      earnedMarks: number
-      totalMarks: number
-      timeSpentSeconds: number | null
-      submittedAt: string
-    }[]
     review: {
       questionId: string
       questionText: string
@@ -280,90 +272,6 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
             </p>
           </div>
         </Card>
-
-        {/* Previous Attempts Section */}
-        {result.previousAttempts && result.previousAttempts.length > 0 && (
-          <Card padding="none" className="overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Previous Attempts</h2>
-                  <p className="text-sm text-slate-500">Compare your performance over time</p>
-                </div>
-              </div>
-            </div>
-            <div className="p-6">
-              {(() => {
-                const currentScore = result.score
-                const bestPreviousScore = Math.max(...result.previousAttempts.map(a => a.score))
-                const isNewBest = currentScore > bestPreviousScore
-
-                return (
-                  <>
-                    <div className="space-y-3">
-                      {result.previousAttempts.map((attempt, index) => {
-                        const attemptNumber = result.previousAttempts.length - index
-                        const scoreDiff = currentScore - attempt.score
-                        const attemptDate = new Date(attempt.submittedAt)
-
-                        return (
-                          <div
-                            key={attempt.id}
-                            className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-sm font-medium text-slate-600">
-                                {attemptNumber}
-                              </span>
-                              <div>
-                                <div className="text-sm font-medium text-slate-900">
-                                  Attempt {attemptNumber}
-                                </div>
-                                <div className="text-xs text-slate-500">
-                                  {attemptDate.toLocaleDateString(undefined, {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric'
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-lg font-bold text-slate-900">
-                                {attempt.score}%
-                              </span>
-                              {scoreDiff !== 0 && (
-                                <span className={`text-sm font-medium px-2 py-0.5 rounded ${
-                                  scoreDiff > 0
-                                    ? 'bg-emerald-100 text-emerald-700'
-                                    : 'bg-red-100 text-red-700'
-                                }`}>
-                                  {scoreDiff > 0 ? '+' : ''}{scoreDiff}%
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                    {isNewBest && (
-                      <div className="mt-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-center">
-                        <span className="text-emerald-700 font-medium">
-                          🎉 New personal best! You improved by {currentScore - bestPreviousScore}%
-                        </span>
-                      </div>
-                    )}
-                  </>
-                )
-              })()}
-            </div>
-          </Card>
-        )}
 
         {/* Review Section */}
         <Card padding="none" className="overflow-hidden">

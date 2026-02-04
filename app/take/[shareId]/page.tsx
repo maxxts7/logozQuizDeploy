@@ -104,20 +104,71 @@ export default async function TakeQuizPage({
     })
 
     if (existingSubmissions >= quiz.maxAttemptsPerIp) {
+      // Query previous attempts to display
+      const previousSubmissions = await prisma.submission.findMany({
+        where: { quizId: quiz.id, ipAddress: visitorIp },
+        select: {
+          id: true,
+          score: true,
+          totalMarks: true,
+          percentage: true,
+          timeSpentSeconds: true,
+          submittedAt: true,
+        },
+        orderBy: { submittedAt: 'asc' },
+      })
+
+      const bestScore = Math.max(...previousSubmissions.map(s => s.percentage))
+
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-12 flex items-center justify-center">
-          <div className="max-w-md mx-auto px-4">
-            <Card padding="lg" className="text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 py-12">
+          <div className="max-w-lg mx-auto px-4 space-y-6">
+            {/* Header Card */}
+            <Card padding="none" className="overflow-hidden">
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-8 text-center text-white">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h1 className="text-2xl font-bold mb-1">{quiz.title}</h1>
+                <p className="text-white/80">You've completed all {quiz.maxAttemptsPerIp} attempts</p>
               </div>
-              <h1 className="text-xl font-bold text-slate-900 mb-2">Attempt Limit Reached</h1>
-              <p className="text-slate-600">
-                You have already submitted this quiz {existingSubmissions} time{existingSubmissions !== 1 ? "s" : ""}.
-                The maximum allowed attempts from your location is {quiz.maxAttemptsPerIp}.
-              </p>
+            </Card>
+
+            {/* Previous Attempts Card */}
+            <Card padding="none" className="overflow-hidden">
+              <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 className="text-lg font-semibold text-slate-900">Your Attempts</h2>
+                <p className="text-sm text-slate-500">Best score: {Math.round(bestScore)}%</p>
+              </div>
+              <div className="p-6 space-y-3">
+                {previousSubmissions.map((attempt, index) => (
+                  <div key={attempt.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-sm font-medium">
+                        {index + 1}
+                      </span>
+                      <div>
+                        <div className="text-sm font-medium">Attempt {index + 1}</div>
+                        <div className="text-xs text-slate-500">
+                          {attempt.submittedAt.toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold">{Math.round(attempt.percentage)}%</span>
+                      {attempt.percentage === bestScore && (
+                        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Best</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </Card>
           </div>
         </div>
