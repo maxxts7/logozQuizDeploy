@@ -90,7 +90,7 @@ export async function PATCH(
       )
     }
 
-    const { title, description, timeLimitSeconds, availableFrom, availableUntil, isPublished, participantFields, randomizeQuestions, randomizeOptions, maxAttemptsPerIp, showAnswersAfter, questions } = validated.data
+    const { title, description, timeLimitSeconds, availableFrom, availableUntil, isPublished, participantFields, randomizeQuestions, randomizeOptions, maxAttemptsPerIp, showAnswersAfter, coverImage, questions } = validated.data
 
     // If questions are provided, delete old ones and create new ones
     if (questions) {
@@ -113,6 +113,7 @@ export async function PATCH(
         ...(randomizeOptions !== undefined && { randomizeOptions }),
         ...(maxAttemptsPerIp !== undefined && { maxAttemptsPerIp }),
         ...(showAnswersAfter !== undefined && { showAnswersAfter: showAnswersAfter ? new Date(showAnswersAfter) : null }),
+        ...(coverImage !== undefined && { coverImage }),
         ...(questions && {
           questions: {
             create: questions.map((q, qIndex) => ({

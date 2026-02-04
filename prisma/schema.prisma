@@ -36,6 +36,7 @@ model Quiz {
   randomizeOptions Boolean @default(false)
   maxAttemptsPerIp Int?    // Limit attempts per IP address (null = unlimited)
   showAnswersAfter DateTime? // When to reveal correct answers (null = immediately)
+  coverImage    String?   // URL for social sharing image
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

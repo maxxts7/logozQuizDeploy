@@ -54,6 +54,7 @@ interface QuizCreatorProps {
     randomizeOptions?: boolean
     maxAttemptsPerIp?: number | null
     showAnswersAfterISO?: string | null
+    coverImage?: string | null
     questions: Question[]
   }
   isEdit?: boolean
@@ -77,6 +78,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
   const [maxAttemptsPerIp, setMaxAttemptsPerIp] = useState(initialData?.maxAttemptsPerIp || 1)
   const [hasAnswerRevealWindow, setHasAnswerRevealWindow] = useState(!!initialData?.showAnswersAfterISO)
   const [showAnswersAfter, setShowAnswersAfter] = useState(isoToDateTimeLocal(initialData?.showAnswersAfterISO))
+  const [coverImage, setCoverImage] = useState(initialData?.coverImage || "")
   const [participantFields, setParticipantFields] = useState<ParticipantField[]>(initialData?.participantFields || [])
   const [questions, setQuestions] = useState<Question[]>(
     initialData?.questions && initialData.questions.length > 0
@@ -203,6 +205,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
         randomizeOptions,
         maxAttemptsPerIp: hasIpLimit ? maxAttemptsPerIp : null,
         showAnswersAfter: hasAnswerRevealWindow && showAnswersAfter ? new Date(showAnswersAfter).toISOString() : null,
+        coverImage: coverImage.trim() || null,
         questions: questions.map((q, index) => ({
           questionText: q.questionText.trim(),
           order: index,
@@ -272,6 +275,20 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
               placeholder="Brief description of your quiz"
               rows={3}
             />
+          </div>
+
+          <div>
+            <Label htmlFor="coverImage">Cover Image URL (optional)</Label>
+            <Input
+              id="coverImage"
+              type="url"
+              value={coverImage}
+              onChange={(e) => setCoverImage(e.target.value)}
+              placeholder="https://example.com/image.jpg"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Image shown when sharing on WhatsApp, Facebook, etc. Use a public URL (e.g., Dropbox, Imgur).
+            </p>
           </div>
 
           {/* Participant Fields */}
