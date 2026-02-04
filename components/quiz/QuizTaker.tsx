@@ -302,7 +302,7 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
             {result.review.map((question, index) => (
               <div
                 key={question.questionId}
-                className={`p-5 rounded-xl border-2 ${
+                className={`p-5 rounded-xl border ${
                   question.isCorrect
                     ? "border-emerald-200 bg-emerald-50/50"
                     : "border-red-200 bg-red-50/50"
@@ -341,7 +341,7 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
                     return (
                       <div
                         key={option.id}
-                        className={`p-3 rounded-lg border-2 ${optionStyle}`}
+                        className={`p-3 rounded-lg border ${optionStyle}`}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-slate-900">{option.optionText}</span>
@@ -517,7 +517,7 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
             return (
               <div
                 key={question.id}
-                className={`p-5 rounded-xl border-2 transition-colors duration-200 ${
+                className={`p-5 rounded-xl border transition-colors duration-200 ${
                   isAnswered
                     ? "border-emerald-200 bg-emerald-50/30"
                     : "border-slate-200 bg-white"
@@ -542,13 +542,13 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
                     return (
                       <label
                         key={option.id}
-                        className={`flex items-center gap-3 p-3.5 rounded-lg border-2 cursor-pointer transition-all duration-150 ${
+                        className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-all duration-150 ${
                           isSelected
                             ? "border-blue-500 bg-blue-50 shadow-sm shadow-blue-100"
                             : "border-slate-200 hover:border-blue-300 hover:bg-blue-50/50"
                         }`}
                       >
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                        <div className={`flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
                           isSelected
                             ? "border-blue-500 bg-blue-500"
                             : "border-slate-300"

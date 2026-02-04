@@ -124,7 +124,7 @@ export default function QuestionBuilder({
             {question.options.map((option, optIndex) => (
               <label
                 key={optIndex}
-                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all duration-150 ${
+                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all duration-150 ${
                   option.isCorrect
                     ? "border-emerald-300 bg-emerald-50"
                     : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"

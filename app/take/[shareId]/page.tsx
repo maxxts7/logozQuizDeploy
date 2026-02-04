@@ -241,7 +241,7 @@ export default async function TakeQuizPage({
                               return (
                                 <div
                                   key={option.id}
-                                  className={`p-3 rounded-lg border-2 ${optionStyle}`}
+                                  className={`p-3 rounded-lg border ${optionStyle}`}
                                 >
                                   <div className="flex items-center justify-between">
                                     <span className="text-slate-900">{option.optionText}</span>
