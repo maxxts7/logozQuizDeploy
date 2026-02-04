@@ -108,8 +108,64 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check IP attempt limit before creating submission
+    if (quiz.maxAttemptsPerIp && quiz.maxAttemptsPerIp > 0 && ipAddress) {
+      const existingSubmissions = await prisma.submission.count({
+        where: {
+          quizId,
+          ipAddress,
+        },
+      })
+
+      if (existingSubmissions >= quiz.maxAttemptsPerIp) {
+        return NextResponse.json(
+          { error: "Attempt limit reached for this quiz" },
+          { status: 429 }
+        )
+      }
+    }
+
     const totalQuestions = quiz.questions.length
     const { earnedMarks, totalMarks, answerRecords } = calculateScore(quiz.questions, answers)
+
+    // Calculate skipped questions
+    const answeredQuestionIds = new Set(answers.map((a: SubmittedAnswer) => a.questionId))
+    const skippedCount = quiz.questions.filter(q => !answeredQuestionIds.has(q.id)).length
+
+    // Query previous attempts by IP
+    let previousAttempts: Array<{
+      id: string
+      score: number
+      earnedMarks: number
+      totalMarks: number
+      timeSpentSeconds: number | null
+      submittedAt: string
+    }> = []
+
+    if (ipAddress) {
+      const previousSubmissions = await prisma.submission.findMany({
+        where: { quizId, ipAddress },
+        select: {
+          id: true,
+          score: true,
+          totalMarks: true,
+          percentage: true,
+          timeSpentSeconds: true,
+          submittedAt: true,
+        },
+        orderBy: { submittedAt: 'desc' },
+        take: 5,
+      })
+
+      previousAttempts = previousSubmissions.map(sub => ({
+        id: sub.id,
+        score: Math.round(sub.percentage),
+        earnedMarks: sub.score,
+        totalMarks: sub.totalMarks,
+        timeSpentSeconds: sub.timeSpentSeconds,
+        submittedAt: sub.submittedAt.toISOString(),
+      }))
+    }
 
     const now = new Date()
     const shouldHideCorrectAnswers = quiz.showAnswersAfter
@@ -147,6 +203,8 @@ export async function POST(request: NextRequest) {
         total: totalQuestions,
         earnedMarks,
         totalMarks,
+        skippedCount,
+        previousAttempts,
         review: reviewData,
         answersHidden: shouldHideCorrectAnswers,
         showAnswersAfter: shouldHideCorrectAnswers && quiz.showAnswersAfter ? quiz.showAnswersAfter.toISOString() : null,
