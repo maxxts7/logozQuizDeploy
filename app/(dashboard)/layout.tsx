@@ -15,9 +15,9 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="h-screen flex flex-col bg-slate-50">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
+      <nav className="flex-shrink-0 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             {/* Left side */}
@@ -95,9 +95,11 @@ export default async function DashboardLayout({
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {children}
+      {/* Main Content - scrollable */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+          {children}
+        </div>
       </main>
     </div>
   )
