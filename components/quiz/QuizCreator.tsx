@@ -79,7 +79,7 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
   const [hasAnswerRevealWindow, setHasAnswerRevealWindow] = useState(!!initialData?.showAnswersAfterISO)
   const [showAnswersAfter, setShowAnswersAfter] = useState(isoToDateTimeLocal(initialData?.showAnswersAfterISO))
   const [coverImage, setCoverImage] = useState(initialData?.coverImage || "")
-  const [participantFields, setParticipantFields] = useState<ParticipantField[]>(initialData?.participantFields || [])
+  const [participantFields, setParticipantFields] = useState<ParticipantField[]>(initialData?.participantFields ?? [{ label: "Name", required: true }])
   const [questions, setQuestions] = useState<Question[]>(
     initialData?.questions && initialData.questions.length > 0
       ? initialData.questions
@@ -297,146 +297,188 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
             onChange={setParticipantFields}
           />
 
-          {/* Test Duration */}
-          <div className="flex items-start gap-4">
-            <Checkbox
-              id="hasTimeLimit"
-              checked={hasTimeLimit}
-              onChange={(e) => setHasTimeLimit(e.target.checked)}
-              label="Set test duration"
-            />
-            {hasTimeLimit && (
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  value={timeLimitMinutes}
-                  onChange={(e) => setTimeLimitMinutes(parseInt(e.target.value) || 0)}
-                  className="w-20"
-                  min="1"
-                  required={hasTimeLimit}
-                />
-                <span className="text-sm text-slate-600">minutes</span>
-              </div>
-            )}
-          </div>
+          {/* Quiz Options */}
+          <div className="pt-1">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Quiz Options</h3>
+            <div className="rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
 
-          {/* Opening and Closing Time */}
-          <div className="space-y-3">
-            <Checkbox
-              id="hasTimeWindow"
-              checked={hasTimeWindow}
-              onChange={(e) => setHasTimeWindow(e.target.checked)}
-              label="Set opening and closing time"
-            />
-            {hasTimeWindow && (
-              <div className="ml-6 space-y-3 p-4 bg-slate-50 rounded-lg">
-                <div>
-                  <Label htmlFor="availableFrom">Opens at</Label>
-                  <Input
-                    id="availableFrom"
-                    type="datetime-local"
-                    value={availableFrom}
-                    onChange={(e) => setAvailableFrom(e.target.value)}
-                  />
+              {/* Time Limit */}
+              <div>
+                <label htmlFor="hasTimeLimit" className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 ${hasTimeLimit ? "bg-blue-50/50" : "hover:bg-slate-50"}`}>
+                  <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${hasTimeLimit ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-400"}`}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-slate-700">Time Limit</span>
+                    <span className="hidden sm:inline text-xs text-slate-400 ml-2">Countdown timer for the quiz</span>
+                  </div>
+                  <input type="checkbox" id="hasTimeLimit" checked={hasTimeLimit} onChange={(e) => setHasTimeLimit(e.target.checked)} className="sr-only" />
+                  <div className={`w-9 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0 ${hasTimeLimit ? "bg-blue-500" : "bg-slate-300"}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasTimeLimit ? "translate-x-4" : "translate-x-0.5"}`} />
+                  </div>
+                </label>
+                {hasTimeLimit && (
+                  <div className="flex items-center gap-3 px-4 py-2.5 bg-blue-50/70 border-t border-blue-100">
+                    <div className="w-7 flex-shrink-0" />
+                    <span className="text-sm text-slate-600">Duration:</span>
+                    <Input type="number" value={timeLimitMinutes} onChange={(e) => setTimeLimitMinutes(parseInt(e.target.value) || 0)} className="w-20 !py-1.5 !text-sm" min="1" required />
+                    <span className="text-sm text-slate-500">minutes</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Availability Window */}
+              <div>
+                <label htmlFor="hasTimeWindow" className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 ${hasTimeWindow ? "bg-violet-50/50" : "hover:bg-slate-50"}`}>
+                  <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${hasTimeWindow ? "bg-violet-100 text-violet-600" : "bg-slate-100 text-slate-400"}`}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-slate-700">Availability Window</span>
+                    <span className="hidden sm:inline text-xs text-slate-400 ml-2">Schedule open and close times</span>
+                  </div>
+                  <input type="checkbox" id="hasTimeWindow" checked={hasTimeWindow} onChange={(e) => setHasTimeWindow(e.target.checked)} className="sr-only" />
+                  <div className={`w-9 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0 ${hasTimeWindow ? "bg-violet-500" : "bg-slate-300"}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasTimeWindow ? "translate-x-4" : "translate-x-0.5"}`} />
+                  </div>
+                </label>
+                {hasTimeWindow && (
+                  <div className="px-4 py-3 bg-violet-50/70 border-t border-violet-100">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-10">
+                      <div>
+                        <Label htmlFor="availableFrom" className="!text-xs !text-slate-500 !mb-1">Opens at</Label>
+                        <Input id="availableFrom" type="datetime-local" value={availableFrom} onChange={(e) => setAvailableFrom(e.target.value)} className="!text-sm !py-1.5" />
+                      </div>
+                      <div>
+                        <Label htmlFor="availableUntil" className="!text-xs !text-slate-500 !mb-1">Closes at</Label>
+                        <Input id="availableUntil" type="datetime-local" value={availableUntil} onChange={(e) => setAvailableUntil(e.target.value)} className="!text-sm !py-1.5" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Publish */}
+              <label htmlFor="isPublished" className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 ${isPublished ? "bg-emerald-50/50" : "hover:bg-slate-50"}`}>
+                <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${isPublished ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-400"}`}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                 </div>
-                <div>
-                  <Label htmlFor="availableUntil">Closes at</Label>
-                  <Input
-                    id="availableUntil"
-                    type="datetime-local"
-                    value={availableUntil}
-                    onChange={(e) => setAvailableUntil(e.target.value)}
-                  />
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-slate-700">Publish</span>
+                  <span className="hidden sm:inline text-xs text-slate-400 ml-2">Make live and shareable via link</span>
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Publish */}
-          <Checkbox
-            id="isPublished"
-            checked={isPublished}
-            onChange={(e) => setIsPublished(e.target.checked)}
-            label="Publish immediately (quiz will be accessible via share link)"
-          />
-
-          {/* Shuffle Options */}
-          <Checkbox
-            id="randomizeQuestions"
-            checked={randomizeQuestions}
-            onChange={(e) => setRandomizeQuestions(e.target.checked)}
-            label="Shuffle question order for each participant"
-          />
-
-          <Checkbox
-            id="randomizeOptions"
-            checked={randomizeOptions}
-            onChange={(e) => setRandomizeOptions(e.target.checked)}
-            label="Shuffle answer options for each question"
-          />
-
-          {/* Attempt Limit */}
-          <div className="space-y-3">
-            <Checkbox
-              id="hasIpLimit"
-              checked={hasIpLimit}
-              onChange={(e) => setHasIpLimit(e.target.checked)}
-              label="Limit number of attempts"
-            />
-            {hasIpLimit && (
-              <div className="ml-6 flex items-center gap-2">
-                <Label htmlFor="maxAttemptsPerIp" className="mb-0">Maximum attempts:</Label>
-                <Input
-                  id="maxAttemptsPerIp"
-                  type="number"
-                  value={maxAttemptsPerIp || ""}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    if (val === "") {
-                      setMaxAttemptsPerIp(0)
-                    } else {
-                      const num = parseInt(val)
-                      if (!isNaN(num) && num >= 0) {
-                        setMaxAttemptsPerIp(num)
-                      }
-                    }
-                  }}
-                  onBlur={() => {
-                    if (!maxAttemptsPerIp || maxAttemptsPerIp < 1) {
-                      setMaxAttemptsPerIp(1)
-                    }
-                  }}
-                  className="w-20"
-                  min="1"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Show Answers After Quiz Ends */}
-          <div className="space-y-3">
-            <Checkbox
-              id="hasAnswerRevealWindow"
-              checked={hasAnswerRevealWindow}
-              onChange={(e) => setHasAnswerRevealWindow(e.target.checked)}
-              label="Show answers after quiz ends"
-            />
-            {hasAnswerRevealWindow && (
-              <div className="ml-6 space-y-3 p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500">
-                  Until this time, participants will only see which questions they got wrong, not the correct answers.
-                </p>
-                <div>
-                  <Label htmlFor="showAnswersAfter">Show after</Label>
-                  <Input
-                    id="showAnswersAfter"
-                    type="datetime-local"
-                    value={showAnswersAfter}
-                    onChange={(e) => setShowAnswersAfter(e.target.value)}
-                  />
+                <input type="checkbox" id="isPublished" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} className="sr-only" />
+                <div className={`w-9 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0 ${isPublished ? "bg-emerald-500" : "bg-slate-300"}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${isPublished ? "translate-x-4" : "translate-x-0.5"}`} />
                 </div>
+              </label>
+
+              {/* Shuffle Questions */}
+              <label htmlFor="randomizeQuestions" className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 ${randomizeQuestions ? "bg-amber-50/50" : "hover:bg-slate-50"}`}>
+                <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${randomizeQuestions ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-400"}`}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 18h2.586a2 2 0 001.414-.586l9.172-9.172A2 2 0 0117.586 8H21m0 0l-3-3m3 3l-3 3M3 6h2.586a2 2 0 011.414.586l9.172 9.172a2 2 0 001.414.586H21m0 0l-3-3m3 3l-3 3" /></svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-slate-700">Shuffle Questions</span>
+                  <span className="hidden sm:inline text-xs text-slate-400 ml-2">Randomize order per participant</span>
+                </div>
+                <input type="checkbox" id="randomizeQuestions" checked={randomizeQuestions} onChange={(e) => setRandomizeQuestions(e.target.checked)} className="sr-only" />
+                <div className={`w-9 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0 ${randomizeQuestions ? "bg-amber-500" : "bg-slate-300"}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${randomizeQuestions ? "translate-x-4" : "translate-x-0.5"}`} />
+                </div>
+              </label>
+
+              {/* Shuffle Options */}
+              <label htmlFor="randomizeOptions" className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 ${randomizeOptions ? "bg-amber-50/50" : "hover:bg-slate-50"}`}>
+                <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${randomizeOptions ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-400"}`}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 18h2.586a2 2 0 001.414-.586l9.172-9.172A2 2 0 0117.586 8H21m0 0l-3-3m3 3l-3 3M3 6h2.586a2 2 0 011.414.586l9.172 9.172a2 2 0 001.414.586H21m0 0l-3-3m3 3l-3 3" /></svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-slate-700">Shuffle Options</span>
+                  <span className="hidden sm:inline text-xs text-slate-400 ml-2">Randomize answer choices</span>
+                </div>
+                <input type="checkbox" id="randomizeOptions" checked={randomizeOptions} onChange={(e) => setRandomizeOptions(e.target.checked)} className="sr-only" />
+                <div className={`w-9 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0 ${randomizeOptions ? "bg-amber-500" : "bg-slate-300"}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${randomizeOptions ? "translate-x-4" : "translate-x-0.5"}`} />
+                </div>
+              </label>
+
+              {/* Attempt Limit */}
+              <div>
+                <label htmlFor="hasIpLimit" className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 ${hasIpLimit ? "bg-rose-50/50" : "hover:bg-slate-50"}`}>
+                  <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${hasIpLimit ? "bg-rose-100 text-rose-600" : "bg-slate-100 text-slate-400"}`}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-slate-700">Attempt Limit</span>
+                    <span className="hidden sm:inline text-xs text-slate-400 ml-2">Restrict retakes per person</span>
+                  </div>
+                  <input type="checkbox" id="hasIpLimit" checked={hasIpLimit} onChange={(e) => setHasIpLimit(e.target.checked)} className="sr-only" />
+                  <div className={`w-9 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0 ${hasIpLimit ? "bg-rose-500" : "bg-slate-300"}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasIpLimit ? "translate-x-4" : "translate-x-0.5"}`} />
+                  </div>
+                </label>
+                {hasIpLimit && (
+                  <div className="flex items-center gap-3 px-4 py-2.5 bg-rose-50/70 border-t border-rose-100">
+                    <div className="w-7 flex-shrink-0" />
+                    <span className="text-sm text-slate-600">Max attempts:</span>
+                    <Input
+                      id="maxAttemptsPerIp"
+                      type="number"
+                      value={maxAttemptsPerIp || ""}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        if (val === "") {
+                          setMaxAttemptsPerIp(0)
+                        } else {
+                          const num = parseInt(val)
+                          if (!isNaN(num) && num >= 0) {
+                            setMaxAttemptsPerIp(num)
+                          }
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!maxAttemptsPerIp || maxAttemptsPerIp < 1) {
+                          setMaxAttemptsPerIp(1)
+                        }
+                      }}
+                      className="w-20 !py-1.5 !text-sm"
+                      min="1"
+                    />
+                    <span className="text-sm text-slate-500">per person</span>
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Delayed Answers */}
+              <div>
+                <label htmlFor="hasAnswerRevealWindow" className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 ${hasAnswerRevealWindow ? "bg-teal-50/50" : "hover:bg-slate-50"}`}>
+                  <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${hasAnswerRevealWindow ? "bg-teal-100 text-teal-600" : "bg-slate-100 text-slate-400"}`}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-slate-700">Delayed Answers</span>
+                    <span className="hidden sm:inline text-xs text-slate-400 ml-2">Reveal correct answers on a schedule</span>
+                  </div>
+                  <input type="checkbox" id="hasAnswerRevealWindow" checked={hasAnswerRevealWindow} onChange={(e) => setHasAnswerRevealWindow(e.target.checked)} className="sr-only" />
+                  <div className={`w-9 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0 ${hasAnswerRevealWindow ? "bg-teal-500" : "bg-slate-300"}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasAnswerRevealWindow ? "translate-x-4" : "translate-x-0.5"}`} />
+                  </div>
+                </label>
+                {hasAnswerRevealWindow && (
+                  <div className="px-4 py-3 bg-teal-50/70 border-t border-teal-100">
+                    <div className="pl-10 space-y-2">
+                      <p className="text-xs text-slate-500">Until this time, participants only see which questions they got wrong.</p>
+                      <div>
+                        <Label htmlFor="showAnswersAfter" className="!text-xs !text-slate-500 !mb-1">Reveal after</Label>
+                        <Input id="showAnswersAfter" type="datetime-local" value={showAnswersAfter} onChange={(e) => setShowAnswersAfter(e.target.value)} className="!text-sm !py-1.5" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
           </div>
         </div>
       </Card>

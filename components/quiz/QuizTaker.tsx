@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { QUIZ_TIMING } from "@/constants/quizConfig"
 import { formatTime, formatMinutes } from "@/lib/utils/timeFormatter"
-import { getReviewOptionStyle } from "@/lib/utils/styles"
 import { Button, Input, Label, Card, Alert } from "@/components/ui"
 import type { ParticipantField } from "./ParticipantFieldsBuilder"
 
@@ -18,17 +17,20 @@ interface QuizTakerProps {
       id: string
       questionText: string
       order: number
+      marks?: number
       options: {
         id: string
         optionText: string
         order: number
+        isCorrect?: boolean
       }[]
     }[]
   }
   visitorIp?: string
+  practiceMode?: boolean
 }
 
-export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
+export default function QuizTaker({ quiz, visitorIp, practiceMode }: QuizTakerProps) {
   const submittingRef = useRef(false)
   const [participantData, setParticipantData] = useState<Record<string, string>>({})
   const [started, setStarted] = useState(false)
@@ -71,15 +73,16 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
     return () => clearInterval(interval)
   }, [started])
 
-  // Countdown timer for time limit
+  // Countdown timer for time limit (disabled in practice mode)
   useEffect(() => {
-    if (!started || !quiz.timeLimitSeconds) return
+    if (!started || !quiz.timeLimitSeconds || practiceMode) return
 
     const interval = setInterval(() => {
       setTimeRemaining((prev) => {
         if (prev === null || prev <= 1) {
+          clearInterval(interval)
           setAutoSubmitTriggered(true)
-          return null
+          return 0
         }
         return prev - 1
       })
@@ -103,16 +106,18 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
   }
 
   const handleStart = () => {
-    const errors: Record<string, string> = {}
-    for (const field of quiz.participantFields) {
-      if (!participantData[field.label]?.trim()) {
-        errors[field.label] = `${field.label} is required`
+    if (!practiceMode) {
+      const errors: Record<string, string> = {}
+      for (const field of quiz.participantFields) {
+        if (!participantData[field.label]?.trim()) {
+          errors[field.label] = `${field.label} is required`
+        }
       }
-    }
 
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors)
-      return
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors)
+        return
+      }
     }
 
     setStartTime(Date.now())
@@ -179,12 +184,42 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
     }
   }, [isSubmitting, quiz.questions, quiz.id, answers, timeRemaining, startTime, participantData, visitorIp])
 
-  // Auto-submit when timer reaches zero
+  // Check answers locally (practice mode — no API call)
+  const handleCheckAnswers = useCallback(() => {
+    const review = quiz.questions.map(q => {
+      const selectedOptionId = answers[q.id] || null
+      const correctOption = q.options.find(o => o.isCorrect)
+      const isCorrect = selectedOptionId != null && selectedOptionId === correctOption?.id
+
+      return {
+        questionId: q.id,
+        questionText: q.questionText,
+        marks: q.marks || 1,
+        options: q.options.map(o => ({
+          id: o.id,
+          optionText: o.optionText,
+          isCorrect: o.isCorrect || false,
+        })),
+        selectedOptionId,
+        correctOptionId: correctOption?.id || null,
+        isCorrect,
+      }
+    })
+
+    const totalMarks = review.reduce((sum, q) => sum + q.marks, 0)
+    const earnedMarks = review.filter(q => q.isCorrect).reduce((sum, q) => sum + q.marks, 0)
+    const score = totalMarks > 0 ? Math.round((earnedMarks / totalMarks) * 100) : 0
+    const skippedCount = review.filter(q => !q.selectedOptionId).length
+
+    setResult({ score, total: quiz.questions.length, earnedMarks, totalMarks, skippedCount, review })
+  }, [quiz.questions, answers])
+
+  // Auto-submit when timer reaches zero (not in practice mode)
   useEffect(() => {
-    if (autoSubmitTriggered && !isSubmitting) {
-      handleSubmit(true)
-    }
-  }, [autoSubmitTriggered, isSubmitting, handleSubmit])
+    if (practiceMode || !autoSubmitTriggered || isSubmitting) return
+    setAutoSubmitTriggered(false)
+    handleSubmit(true)
+  }, [practiceMode, autoSubmitTriggered, isSubmitting, handleSubmit])
 
   const displayName = quiz.participantFields.length > 0
     ? participantData[quiz.participantFields[0].label] || ""
@@ -194,19 +229,16 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
   if (result) {
     const scorePercentage = result.score
     const getScoreGradient = () => {
-      if (scorePercentage >= 80) return "from-emerald-500 to-emerald-600"
-      if (scorePercentage >= 50) return "from-blue-500 to-blue-600"
-      return "from-red-500 to-red-600"
+      if (scorePercentage >= 60) return "from-emerald-500 to-emerald-600"
+      return "from-blue-500 to-blue-600"
     }
     const getScoreBg = () => {
-      if (scorePercentage >= 80) return "bg-emerald-50"
-      if (scorePercentage >= 50) return "bg-blue-50"
-      return "bg-red-50"
+      if (scorePercentage >= 60) return "bg-emerald-50"
+      return "bg-blue-50"
     }
     const getScoreText = () => {
-      if (scorePercentage >= 80) return "text-emerald-600"
-      if (scorePercentage >= 50) return "text-blue-600"
-      return "text-red-600"
+      if (scorePercentage >= 60) return "text-emerald-600"
+      return "text-blue-600"
     }
 
     return (
@@ -220,12 +252,16 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold mb-1">Quiz Completed!</h1>
-            <p className="text-white/80">
-              {displayName
-                ? `Well done, ${displayName}!`
-                : "Well done!"}
-            </p>
+            <h1 className="text-2xl font-bold mb-1">
+              {scorePercentage >= 80 ? "Amazing!" : scorePercentage >= 60 ? "Good Job!" : "Quiz Completed!"}
+            </h1>
+            {scorePercentage >= 60 && (
+              <p className="text-white/80">
+                {scorePercentage >= 80
+                  ? (displayName ? `Outstanding, ${displayName}!` : "Outstanding!")
+                  : (displayName ? `Nice work, ${displayName}!` : "Nice work!")}
+              </p>
+            )}
           </div>
 
           {/* Quiz Info & Score */}
@@ -268,7 +304,9 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
             </div>
 
             <p className="text-center text-slate-500 text-sm">
-              Thank you for participating!
+              {practiceMode
+                ? "This was a practice attempt — no answers were recorded."
+                : "Thank you for participating!"}
             </p>
           </div>
         </Card>
@@ -298,72 +336,101 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
             </Alert>
           )}
 
-          <div className="space-y-4 sm:space-y-6">
-            {result.review.map((question, index) => (
-              <div
-                key={question.questionId}
-                className={`p-3 sm:p-5 rounded-xl border ${
-                  question.isCorrect
-                    ? "border-emerald-200 bg-emerald-50/50"
-                    : "border-red-200 bg-red-50/50"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <div className="flex items-start gap-2 sm:gap-3">
-                    <span
-                      className={`flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold ${
-                        question.isCorrect ? "bg-emerald-500" : "bg-red-500"
-                      }`}
-                    >
-                      {question.isCorrect ? "✓" : "✗"}
-                    </span>
-                    <h3 className="text-sm sm:text-base font-semibold text-slate-900">
-                      {index + 1}. {question.questionText}
-                    </h3>
-                  </div>
-                  <span className={`text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg whitespace-nowrap ${
-                    question.isCorrect
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-red-100 text-red-700"
-                  }`}>
-                    {question.isCorrect ? question.marks : 0} / {question.marks}
-                  </span>
-                </div>
-
-                <div className="ml-8 sm:ml-10 space-y-2">
-                  {question.options.map((option) => {
-                    const isSelected = option.id === question.selectedOptionId
-                    const showCorrectHighlight = !result.answersHidden && option.isCorrect
-                    const showWrongHighlight = isSelected && !question.isCorrect
-
-                    const optionStyle = getReviewOptionStyle(showCorrectHighlight, showWrongHighlight)
-
-                    return (
-                      <div
-                        key={option.id}
-                        className={`p-2.5 sm:p-3 rounded-lg border ${optionStyle}`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm sm:text-base text-slate-900">{option.optionText}</span>
-                          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                            {isSelected && (
-                              <span className="text-xs font-medium text-slate-500 bg-slate-100 px-1.5 sm:px-2 py-0.5 rounded">
-                                Your answer
-                              </span>
-                            )}
-                            {showCorrectHighlight && (
-                              <span className="text-xs font-medium text-emerald-600 bg-emerald-100 px-1.5 sm:px-2 py-0.5 rounded">
-                                Correct
-                              </span>
-                            )}
-                          </div>
+          <div className="space-y-4 sm:space-y-5">
+            {result.review.map((question, index) => {
+              const letterLabels = ["A", "B", "C", "D", "E", "F", "G", "H"]
+              return (
+                <div key={question.questionId} className="bg-white rounded-xl overflow-hidden shadow-sm">
+                  <div className="flex">
+                    <div className={`w-1 flex-shrink-0 ${question.isCorrect ? "bg-emerald-500" : "bg-red-400"}`} />
+                    <div className="flex-1 px-4 py-3 sm:px-5 sm:py-4">
+                      {/* Question header */}
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex items-start gap-2.5">
+                          <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                            question.isCorrect ? "bg-emerald-500" : "bg-red-400"
+                          }`}>
+                            {question.isCorrect ? "✓" : "✗"}
+                          </span>
+                          <h3 className="text-sm sm:text-base font-semibold text-slate-900 pt-0.5">
+                            {index + 1}. {question.questionText}
+                          </h3>
                         </div>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-md whitespace-nowrap ${
+                          question.isCorrect
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-red-100 text-red-700"
+                        }`}>
+                          {question.isCorrect ? question.marks : 0}/{question.marks}
+                        </span>
                       </div>
-                    )
-                  })}
+
+                      {/* Options */}
+                      <div className="ml-8 sm:ml-8.5">
+                        {question.options.map((option, oIndex) => {
+                          const isSelected = option.id === question.selectedOptionId
+                          const showCorrectHighlight = !result.answersHidden && option.isCorrect
+                          const showWrongHighlight = isSelected && !question.isCorrect
+
+                          return (
+                            <div
+                              key={option.id}
+                              className={`flex items-center gap-3 px-3 py-2 -mx-1 rounded-lg ${
+                                showCorrectHighlight
+                                  ? "bg-emerald-50"
+                                  : showWrongHighlight
+                                    ? "bg-red-50"
+                                    : ""
+                              }`}
+                            >
+                              <div className={`flex-shrink-0 w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center ${
+                                showCorrectHighlight
+                                  ? "border-emerald-500 bg-emerald-500"
+                                  : showWrongHighlight
+                                    ? "border-red-400 bg-red-400"
+                                    : isSelected
+                                      ? "border-slate-400 bg-slate-400"
+                                      : "border-slate-200"
+                              }`}>
+                                {(showCorrectHighlight || showWrongHighlight || isSelected) && (
+                                  <div className="w-2 h-2 rounded-full bg-white" />
+                                )}
+                              </div>
+                              <span className={`flex-shrink-0 text-xs font-medium w-5 ${
+                                showCorrectHighlight ? "text-emerald-600"
+                                  : showWrongHighlight ? "text-red-500"
+                                  : "text-slate-400"
+                              }`}>
+                                {letterLabels[oIndex]}
+                              </span>
+                              <span className={`text-sm sm:text-base flex-1 ${
+                                showCorrectHighlight ? "text-emerald-800 font-medium"
+                                  : showWrongHighlight ? "text-red-800"
+                                  : "text-slate-600"
+                              }`}>
+                                {option.optionText}
+                              </span>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                {isSelected && (
+                                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                    Yours
+                                  </span>
+                                )}
+                                {showCorrectHighlight && (
+                                  <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded uppercase tracking-wide">
+                                    Correct
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
           </div>
         </Card>
@@ -409,8 +476,21 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
           </div>
         </div>
 
+        {/* Practice Mode Notice */}
+        {practiceMode && (
+          <div className="mb-6 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+            <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-amber-800">Practice Mode</p>
+              <p className="text-sm text-amber-700 mt-0.5">Your answers won't be recorded. Feel free to test your knowledge!</p>
+            </div>
+          </div>
+        )}
+
         {/* Participant Fields */}
-        {quiz.participantFields.length > 0 && (
+        {!practiceMode && quiz.participantFields.length > 0 && (
           <div className="space-y-4 mb-6">
             {quiz.participantFields.map((field) => (
               <div key={field.label}>
@@ -434,7 +514,7 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
         )}
 
         <Button onClick={handleStart} size="lg" className="w-full">
-          Start Quiz
+          {practiceMode ? "Start Practice" : "Start Quiz"}
         </Button>
       </Card>
     )
@@ -493,7 +573,7 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
               </p>
             </div>
 
-            {quiz.timeLimitSeconds && timeRemaining !== null && (
+            {!practiceMode && quiz.timeLimitSeconds && timeRemaining !== null && (
               <div className="flex items-center gap-2">
                 <span className="hidden sm:inline text-sm text-slate-600">Remaining:</span>
                 <span className={`text-base font-bold tabular-nums ${
@@ -510,84 +590,108 @@ export default function QuizTaker({ quiz, visitorIp }: QuizTakerProps) {
       {/* Spacer for fixed header */}
       <div className="h-28" />
 
+      {/* Practice Mode Banner */}
+      {practiceMode && (
+        <div className="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+          <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-sm text-amber-700">
+            <span className="font-medium text-amber-800">Practice Mode</span> — Your answers won't be recorded.
+          </p>
+        </div>
+      )}
+
       {/* Quiz Content */}
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-5 sm:space-y-6">
           {quiz.questions.map((question, qIndex) => {
             const isAnswered = !!answers[question.id]
+            const letterLabels = ["A", "B", "C", "D", "E", "F", "G", "H"]
             return (
               <div
                 key={question.id}
-                className={`p-3 sm:p-5 rounded-xl border transition-colors duration-200 ${
-                  isAnswered
-                    ? "border-emerald-200 bg-emerald-50/30"
-                    : "border-slate-200 bg-white"
-                }`}
+                className="bg-white rounded-xl overflow-hidden shadow-sm"
               >
-                <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
-                  <span className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs sm:text-sm font-bold ${
-                    isAnswered
-                      ? "bg-emerald-500 text-white"
-                      : "bg-blue-100 text-blue-600"
-                  }`}>
-                    {qIndex + 1}
-                  </span>
-                  <h3 className="text-sm sm:text-base font-semibold text-slate-900 pt-0.5 sm:pt-1">
-                    {question.questionText}
-                  </h3>
-                </div>
+                {/* Left accent bar + question */}
+                <div className="flex">
+                  <div className={`w-1 flex-shrink-0 transition-colors duration-200 ${
+                    isAnswered ? "bg-emerald-500" : "bg-blue-500"
+                  }`} />
+                  <div className="flex-1 px-4 py-3 sm:px-5 sm:py-4">
+                    {/* Question header */}
+                    <div className="flex items-start gap-2.5 mb-3">
+                      <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                        isAnswered ? "bg-emerald-500" : "bg-blue-500"
+                      }`}>
+                        {qIndex + 1}
+                      </span>
+                      <h3 className="text-sm sm:text-base font-semibold text-slate-900 pt-0.5">
+                        {question.questionText}
+                      </h3>
+                    </div>
 
-                <div className="ml-9 sm:ml-11 space-y-2">
-                  {question.options.map((option) => {
-                    const isSelected = answers[question.id] === option.id
-                    return (
-                      <label
-                        key={option.id}
-                        className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3.5 rounded-lg border cursor-pointer transition-all duration-150 ${
-                          isSelected
-                            ? "border-blue-500 bg-blue-50 shadow-sm shadow-blue-100"
-                            : "border-slate-200 hover:border-blue-300 hover:bg-blue-50/50"
-                        }`}
-                      >
-                        <div className={`flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
-                          isSelected
-                            ? "border-blue-500 bg-blue-500"
-                            : "border-slate-300"
-                        }`}>
-                          {isSelected && (
-                            <div className="w-2 h-2 rounded-full bg-white" />
-                          )}
-                        </div>
-                        <input
-                          type="radio"
-                          name={`question-${question.id}`}
-                          value={option.id}
-                          checked={isSelected}
-                          onChange={() => handleAnswerSelect(question.id, option.id)}
-                          className="sr-only"
-                        />
-                        <span className={`text-sm sm:text-base ${isSelected ? "text-slate-900 font-medium" : "text-slate-700"}`}>
-                          {option.optionText}
-                        </span>
-                      </label>
-                    )
-                  })}
+                    {/* Options */}
+                    <div className="ml-8 sm:ml-8.5">
+                      {question.options.map((option, oIndex) => {
+                        const isSelected = answers[question.id] === option.id
+                        return (
+                          <label
+                            key={option.id}
+                            className={`flex items-center gap-3 px-3 py-2.5 -mx-1 rounded-lg cursor-pointer transition-colors duration-150 ${
+                              isSelected
+                                ? "bg-blue-50"
+                                : "hover:bg-slate-50"
+                            }`}
+                          >
+                            {/* Custom radio circle */}
+                            <div className={`flex-shrink-0 w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-colors ${
+                              isSelected
+                                ? "border-blue-500 bg-blue-500"
+                                : "border-slate-300"
+                            }`}>
+                              {isSelected && (
+                                <div className="w-2 h-2 rounded-full bg-white" />
+                              )}
+                            </div>
+                            <input
+                              type="radio"
+                              name={`question-${question.id}`}
+                              value={option.id}
+                              checked={isSelected}
+                              onChange={() => handleAnswerSelect(question.id, option.id)}
+                              className="sr-only"
+                            />
+                            {/* Letter label */}
+                            <span className={`flex-shrink-0 text-xs font-medium w-5 ${
+                              isSelected ? "text-blue-500" : "text-slate-400"
+                            }`}>
+                              {letterLabels[oIndex]}
+                            </span>
+                            <span className={`text-sm sm:text-base ${isSelected ? "text-slate-900 font-medium" : "text-slate-600"}`}>
+                              {option.optionText}
+                            </span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
             )
           })}
 
-          {/* Submit Button */}
-          <Card className="mt-6">
+          {/* Submit / Check Button */}
+          <div className="pt-2 pb-6">
             <Button
-              onClick={() => handleSubmit()}
-              disabled={isSubmitting || Object.keys(answers).length === 0}
+              onClick={practiceMode ? handleCheckAnswers : () => handleSubmit()}
+              disabled={practiceMode ? Object.keys(answers).length === 0 : isSubmitting || Object.keys(answers).length === 0}
               size="lg"
               className="w-full"
-              isLoading={isSubmitting}
+              isLoading={!practiceMode && isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Submit Quiz"}
+              {practiceMode ? "Check Answers" : isSubmitting ? "Submitting..." : "Submit Quiz"}
             </Button>
-          </Card>
+          </div>
         </div>
       </div>
   )
