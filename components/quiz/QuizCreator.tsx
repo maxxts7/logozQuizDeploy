@@ -317,14 +317,16 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
                     <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasTimeLimit ? "translate-x-4" : "translate-x-0.5"}`} />
                   </div>
                 </label>
-                {hasTimeLimit && (
-                  <div className="flex items-center gap-3 px-4 py-2.5 bg-blue-50/70 border-t border-blue-100">
-                    <div className="w-7 flex-shrink-0" />
-                    <span className="text-sm text-slate-600">Duration:</span>
-                    <Input type="number" value={timeLimitMinutes} onChange={(e) => setTimeLimitMinutes(parseInt(e.target.value) || 0)} className="w-20 !py-1.5 !text-sm" min="1" required />
-                    <span className="text-sm text-slate-500">minutes</span>
+                <div className="grid transition-[grid-template-rows] duration-200 ease-out" style={{ gridTemplateRows: hasTimeLimit ? '1fr' : '0fr' }}>
+                  <div className="overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-2.5 bg-blue-50/70 border-t border-blue-100">
+                      <div className="w-7 flex-shrink-0" />
+                      <span className="text-sm text-slate-600">Duration:</span>
+                      <Input type="number" value={timeLimitMinutes} onChange={(e) => setTimeLimitMinutes(parseInt(e.target.value) || 0)} className="w-20 !py-1.5 !text-sm" min="1" required={hasTimeLimit} />
+                      <span className="text-sm text-slate-500">minutes</span>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Availability Window */}
@@ -342,20 +344,22 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
                     <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasTimeWindow ? "translate-x-4" : "translate-x-0.5"}`} />
                   </div>
                 </label>
-                {hasTimeWindow && (
-                  <div className="px-4 py-3 bg-violet-50/70 border-t border-violet-100">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-10">
-                      <div>
-                        <Label htmlFor="availableFrom" className="!text-xs !text-slate-500 !mb-1">Opens at</Label>
-                        <Input id="availableFrom" type="datetime-local" value={availableFrom} onChange={(e) => setAvailableFrom(e.target.value)} className="!text-sm !py-1.5" />
-                      </div>
-                      <div>
-                        <Label htmlFor="availableUntil" className="!text-xs !text-slate-500 !mb-1">Closes at</Label>
-                        <Input id="availableUntil" type="datetime-local" value={availableUntil} onChange={(e) => setAvailableUntil(e.target.value)} className="!text-sm !py-1.5" />
+                <div className="grid transition-[grid-template-rows] duration-200 ease-out" style={{ gridTemplateRows: hasTimeWindow ? '1fr' : '0fr' }}>
+                  <div className="overflow-hidden">
+                    <div className="px-4 py-3 bg-violet-50/70 border-t border-violet-100">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-10">
+                        <div>
+                          <Label htmlFor="availableFrom" className="!text-xs !text-slate-500 !mb-1">Opens at</Label>
+                          <Input id="availableFrom" type="datetime-local" value={availableFrom} onChange={(e) => setAvailableFrom(e.target.value)} className="!text-sm !py-1.5" />
+                        </div>
+                        <div>
+                          <Label htmlFor="availableUntil" className="!text-xs !text-slate-500 !mb-1">Closes at</Label>
+                          <Input id="availableUntil" type="datetime-local" value={availableUntil} onChange={(e) => setAvailableUntil(e.target.value)} className="!text-sm !py-1.5" />
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Publish */}
@@ -418,36 +422,38 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
                     <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasIpLimit ? "translate-x-4" : "translate-x-0.5"}`} />
                   </div>
                 </label>
-                {hasIpLimit && (
-                  <div className="flex items-center gap-3 px-4 py-2.5 bg-rose-50/70 border-t border-rose-100">
-                    <div className="w-7 flex-shrink-0" />
-                    <span className="text-sm text-slate-600">Max attempts:</span>
-                    <Input
-                      id="maxAttemptsPerIp"
-                      type="number"
-                      value={maxAttemptsPerIp || ""}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        if (val === "") {
-                          setMaxAttemptsPerIp(0)
-                        } else {
-                          const num = parseInt(val)
-                          if (!isNaN(num) && num >= 0) {
-                            setMaxAttemptsPerIp(num)
+                <div className="grid transition-[grid-template-rows] duration-200 ease-out" style={{ gridTemplateRows: hasIpLimit ? '1fr' : '0fr' }}>
+                  <div className="overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-2.5 bg-rose-50/70 border-t border-rose-100">
+                      <div className="w-7 flex-shrink-0" />
+                      <span className="text-sm text-slate-600">Max attempts:</span>
+                      <Input
+                        id="maxAttemptsPerIp"
+                        type="number"
+                        value={maxAttemptsPerIp || ""}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          if (val === "") {
+                            setMaxAttemptsPerIp(0)
+                          } else {
+                            const num = parseInt(val)
+                            if (!isNaN(num) && num >= 0) {
+                              setMaxAttemptsPerIp(num)
+                            }
                           }
-                        }
-                      }}
-                      onBlur={() => {
-                        if (!maxAttemptsPerIp || maxAttemptsPerIp < 1) {
-                          setMaxAttemptsPerIp(1)
-                        }
-                      }}
-                      className="w-20 !py-1.5 !text-sm"
-                      min="1"
-                    />
-                    <span className="text-sm text-slate-500">per person</span>
+                        }}
+                        onBlur={() => {
+                          if (!maxAttemptsPerIp || maxAttemptsPerIp < 1) {
+                            setMaxAttemptsPerIp(1)
+                          }
+                        }}
+                        className="w-20 !py-1.5 !text-sm"
+                        min="1"
+                      />
+                      <span className="text-sm text-slate-500">per person</span>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Delayed Answers */}
@@ -465,17 +471,19 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
                     <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${hasAnswerRevealWindow ? "translate-x-4" : "translate-x-0.5"}`} />
                   </div>
                 </label>
-                {hasAnswerRevealWindow && (
-                  <div className="px-4 py-3 bg-teal-50/70 border-t border-teal-100">
-                    <div className="pl-10 space-y-2">
-                      <p className="text-xs text-slate-500">Until this time, participants only see which questions they got wrong.</p>
-                      <div>
-                        <Label htmlFor="showAnswersAfter" className="!text-xs !text-slate-500 !mb-1">Reveal after</Label>
-                        <Input id="showAnswersAfter" type="datetime-local" value={showAnswersAfter} onChange={(e) => setShowAnswersAfter(e.target.value)} className="!text-sm !py-1.5" />
+                <div className="grid transition-[grid-template-rows] duration-200 ease-out" style={{ gridTemplateRows: hasAnswerRevealWindow ? '1fr' : '0fr' }}>
+                  <div className="overflow-hidden">
+                    <div className="px-4 py-3 bg-teal-50/70 border-t border-teal-100">
+                      <div className="pl-10 space-y-2">
+                        <p className="text-xs text-slate-500">Until this time, participants only see which questions they got wrong.</p>
+                        <div>
+                          <Label htmlFor="showAnswersAfter" className="!text-xs !text-slate-500 !mb-1">Reveal after</Label>
+                          <Input id="showAnswersAfter" type="datetime-local" value={showAnswersAfter} onChange={(e) => setShowAnswersAfter(e.target.value)} className="!text-sm !py-1.5" />
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
 
             </div>
