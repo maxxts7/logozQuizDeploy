@@ -278,7 +278,7 @@ export default async function TakeQuizPage({
                               <span className={`flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold text-white ${correctBg}`}>
                                 {wasSkipped ? "–" : isCorrect ? "✓" : "✗"}
                               </span>
-                              <h4 className="min-w-0 break-words text-sm sm:text-base font-semibold text-slate-900 pt-0.5">
+                              <h4 className="min-w-0 break-words text-base sm:text-lg font-bold text-black pt-0.5">
                                 {index + 1}. {question.questionText}
                               </h4>
                             </div>
@@ -334,11 +334,7 @@ export default async function TakeQuizPage({
                                   }`}>
                                     {letterLabels[oIndex]}
                                   </span>
-                                  <span className={`text-sm sm:text-base flex-1 ${
-                                    isCorrectOption ? "text-emerald-800 font-medium"
-                                      : isWrongSelection ? "text-red-800"
-                                      : "text-slate-600"
-                                  }`}>
+                                  <span className="text-base sm:text-lg font-bold text-black flex-1">
                                     {option.optionText}
                                   </span>
                                   <div className="flex items-center gap-1 flex-shrink-0">
