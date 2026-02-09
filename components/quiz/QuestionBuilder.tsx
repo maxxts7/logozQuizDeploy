@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef, useEffect, useCallback } from "react"
 import { Card, Input, Label, Button } from "@/components/ui"
 
 export interface QuestionOption {
@@ -30,6 +31,20 @@ export default function QuestionBuilder({
   onDelete,
   onDuplicate,
 }: QuestionBuilderProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current
+    if (el) {
+      el.style.height = "auto"
+      el.style.height = el.scrollHeight + "px"
+    }
+  }, [])
+
+  useEffect(() => {
+    autoResize()
+  }, [question.questionText, autoResize])
+
   const handleQuestionTextChange = (text: string) => {
     onUpdate(questionIndex, { ...question, questionText: text })
   }
@@ -53,11 +68,11 @@ export default function QuestionBuilder({
   }
 
   return (
-    <Card padding="none" className="overflow-hidden">
+    <Card padding="none" className="overflow-hidden !border-0 !shadow-none">
       {/* Header */}
       <div className="flex items-center justify-between px-4 sm:px-5 py-3 bg-slate-50/80 border-b border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <span className="w-6 h-6 bg-blue-600 text-white rounded-md flex items-center justify-center text-xs font-bold">
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <span className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-600 text-white rounded-md flex items-center justify-center text-[10px] sm:text-xs font-bold">
             {questionIndex + 1}
           </span>
           <div className="flex items-center gap-2">
@@ -95,12 +110,14 @@ export default function QuestionBuilder({
 
       <div className="px-4 sm:px-5 py-4 space-y-4">
         {/* Question Text */}
-        <Input
-          type="text"
+        <textarea
+          ref={textareaRef}
           value={question.questionText}
           onChange={(e) => handleQuestionTextChange(e.target.value)}
+          onInput={autoResize}
           placeholder="Enter your question..."
-          className="!text-base !font-medium !border-0 !border-b !border-slate-200 !rounded-none !px-0 !py-2 focus:!border-blue-500 focus:!ring-0 !bg-transparent placeholder:!text-slate-300"
+          className="w-full text-base font-medium border-0 border-b border-slate-200 rounded-none px-0 py-2 focus:border-blue-500 focus:ring-0 bg-transparent placeholder:text-slate-300 resize-none overflow-hidden outline-none"
+          rows={1}
           required
         />
 
@@ -111,20 +128,20 @@ export default function QuestionBuilder({
             {question.options.map((option, optIndex) => (
               <label
                 key={optIndex}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 group ${
+                className={`flex items-center gap-1.5 sm:gap-3 px-1 py-2.5 sm:-mx-1 sm:px-3 rounded-lg cursor-pointer transition-all duration-150 group ${
                   option.isCorrect
                     ? "bg-emerald-50"
                     : "hover:bg-slate-50"
                 }`}
               >
-                <div className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                <div className={`flex-shrink-0 w-3 h-3 sm:w-[18px] sm:h-[18px] rounded-full border-[1.5px] sm:border-2 flex items-center justify-center transition-colors ${
                   option.isCorrect
                     ? "border-emerald-500 bg-emerald-500"
                     : "border-slate-300 group-hover:border-slate-400"
                 }`}
                 >
                   {option.isCorrect && (
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-2 h-2 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   )}
@@ -137,7 +154,7 @@ export default function QuestionBuilder({
                   className="sr-only"
                   required
                 />
-                <span className={`flex-shrink-0 text-xs font-semibold w-5 text-center ${option.isCorrect ? "text-emerald-600" : "text-slate-400"}`}>
+                <span className={`hidden sm:inline flex-shrink-0 text-xs font-medium sm:w-5 text-center ${option.isCorrect ? "text-emerald-600" : "text-slate-400"}`}>
                   {String.fromCharCode(65 + optIndex)}
                 </span>
                 <input
@@ -145,7 +162,7 @@ export default function QuestionBuilder({
                   value={option.optionText}
                   onChange={(e) => handleOptionChange(optIndex, e.target.value)}
                   placeholder={`Option ${String.fromCharCode(65 + optIndex)}`}
-                  className="flex-1 bg-transparent border-0 outline-none text-sm text-slate-700 placeholder:text-slate-300 py-0.5"
+                  className="flex-1 bg-transparent border-0 outline-none text-sm sm:text-base text-slate-700 placeholder:text-slate-300 py-0.5"
                   required
                 />
                 {option.isCorrect && (

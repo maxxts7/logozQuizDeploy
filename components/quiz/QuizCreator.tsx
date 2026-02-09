@@ -571,6 +571,9 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
         </Button>
       </div>
 
+      {/* Bottom spacer for mobile reachability */}
+      <div className="pb-24 sm:pb-0" />
+
       {/* Quiz Importer Modal */}
       {showQuizImporter && (
         <QuizImporter
