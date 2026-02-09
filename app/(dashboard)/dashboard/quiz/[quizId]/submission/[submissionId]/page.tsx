@@ -108,18 +108,20 @@ export default async function SubmissionDetailPage({
           return (
             <Card
               key={question.id}
-              className={`border-l-4 ${
+              className={`border-l-4 sm:ring-0 ${
                 isCorrect ? "border-l-emerald-500" : "border-l-red-500"
               }`}
             >
               <div className="flex items-start justify-between gap-4 mb-4">
-                <h3 className="text-base font-semibold text-slate-900">
+                <h3 className="min-w-0 break-words text-base font-semibold text-slate-900">
                   <span className="text-slate-400 mr-2">{index + 1}.</span>
                   {question.questionText}
                 </h3>
-                <Badge variant={isCorrect ? "success" : "error"}>
-                  {isCorrect ? "Correct" : "Incorrect"}
-                </Badge>
+                <span className="flex-shrink-0">
+                  <Badge variant={isCorrect ? "success" : "error"}>
+                    {isCorrect ? "Correct" : "Incorrect"}
+                  </Badge>
+                </span>
               </div>
 
               <div className="space-y-2">
