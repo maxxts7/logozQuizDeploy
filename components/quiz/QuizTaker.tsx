@@ -186,7 +186,7 @@ const QuestionCard = memo(function QuestionCard({
         <div className="flex-1 px-1 py-3 sm:px-5 sm:py-4">
           {/* Question header */}
           <div className="flex items-start justify-between gap-2 mb-3">
-            <h3 className="min-w-0 break-words text-sm sm:text-base font-semibold text-slate-900">
+            <h3 className="min-w-0 break-words text-base sm:text-lg font-bold text-black">
               {question.questionText}
             </h3>
             <span className={`flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold text-white ${statusBg}`}>
@@ -230,7 +230,7 @@ const QuestionCard = memo(function QuestionCard({
                   }`}>
                     {LETTER_LABELS[oIndex]}
                   </span>
-                  <span className={`text-sm sm:text-base ${isSelected ? "text-slate-900 font-medium" : "text-slate-600"}`}>
+                  <span className="text-base sm:text-lg font-bold text-black">
                     {option.optionText}
                   </span>
                 </label>
@@ -573,7 +573,7 @@ export default function QuizTaker({ quiz, visitorIp, practiceMode }: QuizTakerPr
                         <span className={`flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold text-white ${correctBg}`}>
                           {question.isCorrect ? "\u2713" : "\u2717"}
                         </span>
-                        <h3 className="min-w-0 break-words text-sm sm:text-base font-semibold text-slate-900 pt-0.5">
+                        <h3 className="min-w-0 break-words text-base sm:text-lg font-bold text-black pt-0.5">
                           {index + 1}. {question.questionText}
                         </h3>
                       </div>
@@ -607,7 +607,7 @@ export default function QuizTaker({ quiz, visitorIp, practiceMode }: QuizTakerPr
                             <span className={`hidden sm:inline flex-shrink-0 text-xs font-medium sm:w-5 ${styles.letterColor}`}>
                               {LETTER_LABELS[oIndex]}
                             </span>
-                            <span className={`text-sm sm:text-base flex-1 ${styles.textColor}`}>
+                            <span className={`text-base sm:text-lg font-bold text-black flex-1`}>
                               {option.optionText}
                             </span>
                             <div className="flex items-center gap-1 flex-shrink-0">
