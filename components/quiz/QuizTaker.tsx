@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, memo } from "react"
 import { QUIZ_TIMING } from "@/constants/quizConfig"
-import { formatTime, formatMinutes, formatDateTime } from "@/lib/utils/timeFormatter"
+import { formatTime, formatMinutes, formatDateTime, formatTimeMinutesSeconds } from "@/lib/utils/timeFormatter"
 import { Button, Input, Label, Card, Alert } from "@/components/ui"
 import type { ParticipantField } from "./ParticipantFieldsBuilder"
 
@@ -275,6 +275,7 @@ export default function QuizTaker({ quiz, visitorIp, practiceMode }: QuizTakerPr
     }[]
     answersHidden?: boolean
     showAnswersAfter?: string | null
+    timeSpentSeconds?: number | null
   } | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
@@ -370,7 +371,7 @@ export default function QuizTaker({ quiz, visitorIp, practiceMode }: QuizTakerPr
         return
       }
 
-      setResult(data)
+      setResult({ ...data, timeSpentSeconds: timeSpentSeconds })
     } catch {
       alert("An error occurred. Please try again.")
     } finally {
@@ -406,8 +407,9 @@ export default function QuizTaker({ quiz, visitorIp, practiceMode }: QuizTakerPr
     const score = totalMarks > 0 ? Math.round((earnedMarks / totalMarks) * 100) : 0
     const skippedCount = review.filter(q => !q.selectedOptionId).length
 
-    setResult({ score, total: quiz.questions.length, earnedMarks, totalMarks, skippedCount, review })
-  }, [quiz.questions, answers])
+    const timeSpentSeconds = startTime ? Math.floor((Date.now() - startTime) / 1000) : null
+    setResult({ score, total: quiz.questions.length, earnedMarks, totalMarks, skippedCount, review, timeSpentSeconds })
+  }, [quiz.questions, answers, startTime])
 
   // Auto-submit when timer reaches zero (not in practice mode)
   useEffect(() => {
@@ -495,6 +497,11 @@ export default function QuizTaker({ quiz, visitorIp, practiceMode }: QuizTakerPr
                 {result.skippedCount > 0 && (
                   <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-2.5 py-1 rounded-lg bg-amber-100/60 text-amber-700 border border-amber-200/80">
                     {result.skippedCount} <span className="font-normal opacity-70">skipped</span>
+                  </span>
+                )}
+                {result.timeSpentSeconds != null && (
+                  <span className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold px-2.5 py-1 rounded-lg bg-slate-100/60 text-slate-600 border border-slate-200/80">
+                    {formatTimeMinutesSeconds(result.timeSpentSeconds)} <span className="font-normal opacity-70">taken</span>
                   </span>
                 )}
                 <span className="text-xs sm:text-sm text-slate-400 ml-auto truncate">
