@@ -14,7 +14,7 @@ interface ParticipantFieldsBuilderProps {
 
 export default function ParticipantFieldsBuilder({ fields, onChange }: ParticipantFieldsBuilderProps) {
   const addField = () => {
-    onChange([...fields, { label: "", required: false }])
+    onChange([...fields, { label: "", required: true }])
   }
 
   const updateField = (index: number, updates: Partial<ParticipantField>) => {

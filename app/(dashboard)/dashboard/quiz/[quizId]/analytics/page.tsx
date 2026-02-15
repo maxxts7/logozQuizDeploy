@@ -6,7 +6,7 @@ import ShareLink from "@/components/quiz/ShareLink"
 import ExportButton from "@/components/quiz/ExportButton"
 import IpAttemptsManager from "@/components/quiz/IpAttemptsManager"
 import { getQuizShareUrl } from "@/constants/quizConfig"
-import { formatTimeMinutesSeconds } from "@/lib/utils/timeFormatter"
+import { formatTimeMinutesSeconds, formatDateTime } from "@/lib/utils/timeFormatter"
 import { formatParticipantDisplay } from "@/lib/utils/parsing"
 import { getRankDisplay, calculateAverage } from "@/lib/utils/leaderboard"
 import { Button, Card, Badge, Alert } from "@/components/ui"
@@ -305,7 +305,7 @@ export default async function AnalyticsPage({
                         : "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {new Date(submission.submittedAt).toLocaleString()}
+                      {formatDateTime(submission.submittedAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <Link

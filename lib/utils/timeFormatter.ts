@@ -110,3 +110,24 @@ export function formatDuration(seconds: number): string {
   }
   return formatTimeMinutesSeconds(seconds);
 }
+
+/**
+ * Formats a date into dd/mm/yy format
+ */
+export function formatDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = String(d.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
+}
+
+/**
+ * Formats a date into dd/mm/yy, HH:MM format
+ */
+export function formatDateTime(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${formatDate(d)}, ${hours}:${minutes}`;
+}

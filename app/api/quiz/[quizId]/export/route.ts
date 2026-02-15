@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { safeJsonParse, parseParticipantData } from "@/lib/utils/parsing"
+import { formatTimeMinutesSeconds, formatDateTime } from "@/lib/utils/timeFormatter"
 import * as XLSX from "xlsx"
 
 // GET /api/quiz/[quizId]/export - Export quiz submissions as Excel
@@ -71,8 +72,9 @@ export async function GET(
       row["Score (%)"] = Math.round(submission.percentage)
       row["Correct Answers"] = submission.score
       row["Total Questions"] = submission.totalQuestions
+      row["Time Spent"] = submission.timeSpentSeconds ? formatTimeMinutesSeconds(submission.timeSpentSeconds) : "N/A"
       row["Time Spent (seconds)"] = submission.timeSpentSeconds || "N/A"
-      row["Submitted At"] = new Date(submission.submittedAt).toLocaleString()
+      row["Submitted At"] = formatDateTime(new Date(submission.submittedAt))
 
       return row
     })

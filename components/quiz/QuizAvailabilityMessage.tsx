@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react"
 import { Card } from "@/components/ui"
+import { formatDateTime } from "@/lib/utils/timeFormatter"
 
 interface QuizAvailabilityMessageProps {
   type: "notStarted" | "closed"
@@ -23,7 +24,7 @@ function getServerSnapshot() {
 export default function QuizAvailabilityMessage({ type, dateISO }: QuizAvailabilityMessageProps) {
   const isClient = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
-  const dateDisplay = isClient ? new Date(dateISO).toLocaleString() : "..."
+  const dateDisplay = isClient ? formatDateTime(dateISO) : "..."
 
   if (type === "notStarted") {
     return (

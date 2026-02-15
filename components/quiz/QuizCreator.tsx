@@ -329,14 +329,14 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
                 </div>
               </div>
 
-              {/* Availability Window */}
+              {/* Schedule Quiz */}
               <div>
                 <label htmlFor="hasTimeWindow" className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors duration-150 ${hasTimeWindow ? "bg-violet-50/50" : "hover:bg-slate-50"}`}>
                   <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${hasTimeWindow ? "bg-violet-100 text-violet-600" : "bg-slate-100 text-slate-400"}`}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-slate-700">Availability Window</span>
+                    <span className="text-sm font-medium text-slate-700">Schedule Quiz</span>
                     <span className="hidden sm:inline text-xs text-slate-400 ml-2">Schedule open and close times</span>
                   </div>
                   <input type="checkbox" id="hasTimeWindow" checked={hasTimeWindow} onChange={(e) => setHasTimeWindow(e.target.checked)} className="sr-only" />
@@ -550,29 +550,31 @@ export default function QuizCreator({ initialData, isEdit = false }: QuizCreator
         <Alert variant="error">{error}</Alert>
       )}
 
-      {/* Actions */}
-      <div className="flex gap-4">
-        <Button
-          type="button"
-          variant="secondary"
-          size="lg"
-          className="flex-1"
-          onClick={() => router.back()}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          size="lg"
-          className="flex-1"
-          isLoading={isLoading}
-        >
-          {isLoading ? "Saving..." : isEdit ? "Update Quiz" : "Create Quiz"}
-        </Button>
-      </div>
+      {/* Spacer for sticky actions bar */}
+      <div className="h-20" />
 
-      {/* Bottom spacer for mobile reachability */}
-      <div className="pb-24 sm:pb-0" />
+      {/* Sticky Actions */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+        <div className="max-w-4xl mx-auto flex gap-4">
+          <Button
+            type="button"
+            variant="secondary"
+            size="lg"
+            className="flex-1"
+            onClick={() => router.back()}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            size="lg"
+            className="flex-1"
+            isLoading={isLoading}
+          >
+            {isLoading ? "Saving..." : isEdit ? "Update Quiz" : "Create Quiz"}
+          </Button>
+        </div>
+      </div>
 
       {/* Quiz Importer Modal */}
       {showQuizImporter && (

@@ -5,6 +5,7 @@ import QuizTaker from "@/components/quiz/QuizTaker"
 import QuizAvailabilityMessage from "@/components/quiz/QuizAvailabilityMessage"
 import { safeJsonParse } from "@/lib/utils/parsing"
 import { getVisitorIp } from "@/lib/utils/request"
+import { formatDateTime } from "@/lib/utils/timeFormatter"
 
 export async function generateMetadata({
   params,
@@ -251,7 +252,7 @@ export default async function TakeQuizPage({
                   </svg>
                   <p className="text-sm text-amber-700">
                     <span className="font-semibold">Correct answers will be available on:</span>{" "}
-                    {new Date(quiz.showAnswersAfter).toLocaleString()}
+                    {formatDateTime(quiz.showAnswersAfter)}
                   </p>
                 </div>
               )}
@@ -334,7 +335,7 @@ export default async function TakeQuizPage({
                                   }`}>
                                     {letterLabels[oIndex]}
                                   </span>
-                                  <span className="text-base sm:text-lg font-bold text-black flex-1">
+                                  <span className={`text-base sm:text-lg font-bold flex-1 ${isWrongSelection ? "text-red-600" : "text-black"}`}>
                                     {option.optionText}
                                   </span>
                                   <div className="flex items-center gap-1 flex-shrink-0">

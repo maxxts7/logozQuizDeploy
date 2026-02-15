@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, memo } from "react"
 import { QUIZ_TIMING } from "@/constants/quizConfig"
-import { formatTime, formatMinutes } from "@/lib/utils/timeFormatter"
+import { formatTime, formatMinutes, formatDateTime } from "@/lib/utils/timeFormatter"
 import { Button, Input, Label, Card, Alert } from "@/components/ui"
 import type { ParticipantField } from "./ParticipantFieldsBuilder"
 
@@ -101,19 +101,7 @@ function TimerDisplay({ started, timeLimitSeconds, practiceMode, onTimeUp }: {
   practiceMode?: boolean
   onTimeUp: () => void
 }) {
-  const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [timeRemaining, setTimeRemaining] = useState<number | null>(timeLimitSeconds)
-
-  // Elapsed time counter
-  useEffect(() => {
-    if (!started) return
-
-    const interval = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1)
-    }, QUIZ_TIMING.TIMER_INTERVAL_MS)
-
-    return () => clearInterval(interval)
-  }, [started])
 
   // Countdown timer for time limit (disabled in practice mode)
   useEffect(() => {
@@ -133,29 +121,19 @@ function TimerDisplay({ started, timeLimitSeconds, practiceMode, onTimeUp }: {
     return () => clearInterval(interval)
   }, [started, timeLimitSeconds, practiceMode, onTimeUp])
 
-  return (
-    <div className="max-w-3xl mx-auto px-2 sm:px-4 py-2.5">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 text-sm text-slate-600">
-            <ClockIcon className="w-4 h-4" />
-            Elapsed:
-          </div>
-          <span className="text-base font-bold text-emerald-600 tabular-nums">
-            {formatTime(elapsedSeconds)}
-          </span>
-        </div>
+  if (!timeLimitSeconds || practiceMode || timeRemaining === null) return null
 
-        {!practiceMode && timeLimitSeconds && timeRemaining !== null && (
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:inline text-sm text-slate-600">Remaining:</span>
-            <span className={`text-base font-bold tabular-nums ${
-              timeRemaining < 60 ? "text-red-600 animate-pulse" : "text-blue-600"
-            }`}>
-              {formatTime(timeRemaining)}
-            </span>
-          </div>
-        )}
+  const isUrgent = timeRemaining < 60
+
+  return (
+    <div className="max-w-3xl mx-auto px-2 sm:px-4 py-2">
+      <div className="flex items-center justify-center gap-2.5">
+        <ClockIcon className={`w-5 h-5 sm:w-6 sm:h-6 ${isUrgent ? "text-red-500" : "text-blue-500"}`} />
+        <span className={`text-2xl sm:text-3xl font-black tabular-nums tracking-tight ${
+          isUrgent ? "text-red-600 animate-pulse" : "text-blue-600"
+        }`}>
+          {formatTime(timeRemaining)}
+        </span>
       </div>
     </div>
   )
@@ -183,25 +161,30 @@ const QuestionCard = memo(function QuestionCard({
     <div className="bg-white rounded-xl overflow-hidden sm:shadow-sm">
       <div className="flex">
         <div className={`w-1 flex-shrink-0 hidden sm:block ${statusBg}`} />
-        <div className="flex-1 px-1 py-3 sm:px-5 sm:py-4">
-          {/* Question header */}
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <h3 className="min-w-0 break-words text-base sm:text-lg font-bold text-black">
-              {question.questionText}
-            </h3>
-            <span className={`flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold text-white ${statusBg}`}>
+        <div className="flex-1 px-2 py-3 sm:px-5 sm:py-4">
+          {/* Question number */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold text-white ${statusBg}`}>
               {qIndex + 1}
+            </span>
+            <span className="text-sm font-semibold text-slate-400">
+              Question {qIndex + 1}
             </span>
           </div>
 
+          {/* Question text */}
+          <h3 className="min-w-0 break-words text-lg sm:text-xl font-bold text-black mb-4">
+            {question.questionText}
+          </h3>
+
           {/* Options */}
-          <div className="ml-0 sm:ml-8">
+          <div className="space-y-1">
             {question.options.map((option, oIndex) => {
               const isSelected = selectedOptionId === option.id
               return (
                 <label
                   key={option.id}
-                  className={`flex items-center gap-1.5 sm:gap-3 px-1 py-2.5 sm:-mx-1 sm:px-3 rounded-lg cursor-pointer transition-colors duration-150 ${
+                  className={`flex items-center gap-2 sm:gap-3 px-2 py-3 sm:px-4 rounded-lg cursor-pointer transition-colors duration-150 ${
                     isSelected
                       ? "bg-blue-50"
                       : "hover:bg-slate-50"
@@ -225,12 +208,12 @@ const QuestionCard = memo(function QuestionCard({
                     onChange={() => onSelect(question.id, option.id)}
                     className="sr-only"
                   />
-                  <span className={`hidden sm:inline flex-shrink-0 text-xs font-medium sm:w-5 ${
+                  <span className={`hidden sm:inline flex-shrink-0 text-xs font-medium w-5 ${
                     isSelected ? "text-blue-500" : "text-slate-400"
                   }`}>
                     {LETTER_LABELS[oIndex]}
                   </span>
-                  <span className="text-base sm:text-lg font-bold text-black">
+                  <span className="text-lg sm:text-xl font-bold text-black">
                     {option.optionText}
                   </span>
                 </label>
@@ -553,7 +536,7 @@ export default function QuizTaker({ quiz, visitorIp, practiceMode }: QuizTakerPr
         {result.answersHidden && result.showAnswersAfter && (
           <Alert variant="warning" className="mb-5 sm:mb-6">
             <strong>Note:</strong> Correct answers will be revealed after{" "}
-            <strong>{new Date(result.showAnswersAfter).toLocaleString()}</strong>.
+            <strong>{formatDateTime(result.showAnswersAfter)}</strong>.
             For now, you can only see which questions you got right or wrong.
           </Alert>
         )}
@@ -607,7 +590,7 @@ export default function QuizTaker({ quiz, visitorIp, practiceMode }: QuizTakerPr
                             <span className={`hidden sm:inline flex-shrink-0 text-xs font-medium sm:w-5 ${styles.letterColor}`}>
                               {LETTER_LABELS[oIndex]}
                             </span>
-                            <span className={`text-base sm:text-lg font-bold text-black flex-1`}>
+                            <span className={`text-base sm:text-lg font-bold flex-1 ${showWrongHighlight ? "text-red-600" : "text-black"}`}>
                               {option.optionText}
                             </span>
                             <div className="flex items-center gap-1 flex-shrink-0">

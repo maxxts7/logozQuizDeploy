@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
-import { formatTimeMinutesSeconds } from "@/lib/utils/timeFormatter"
+import { formatTimeMinutesSeconds, formatDateTime } from "@/lib/utils/timeFormatter"
 import { formatParticipantDisplay } from "@/lib/utils/parsing"
 import { getOptionStyle } from "@/lib/utils/styles"
 import { Button, Card, Badge } from "@/components/ui"
@@ -91,7 +91,7 @@ export default async function SubmissionDetailPage({
           <div>
             <p className="text-sm text-slate-500 mb-1">Submitted</p>
             <p className="text-lg font-semibold text-slate-900">
-              {new Date(submission.submittedAt).toLocaleString()}
+              {formatDateTime(submission.submittedAt)}
             </p>
           </div>
         </div>
