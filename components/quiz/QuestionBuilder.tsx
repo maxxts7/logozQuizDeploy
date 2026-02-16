@@ -32,9 +32,9 @@ export default function QuestionBuilder({
   onDuplicate,
 }: QuestionBuilderProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const optionRefs = useRef<(HTMLTextAreaElement | null)[]>([])
 
-  const autoResize = useCallback(() => {
-    const el = textareaRef.current
+  const autoResize = useCallback((el: HTMLTextAreaElement | null) => {
     if (el) {
       el.style.height = "auto"
       el.style.height = el.scrollHeight + "px"
@@ -42,8 +42,12 @@ export default function QuestionBuilder({
   }, [])
 
   useEffect(() => {
-    autoResize()
+    autoResize(textareaRef.current)
   }, [question.questionText, autoResize])
+
+  useEffect(() => {
+    optionRefs.current.forEach((el) => autoResize(el))
+  }, [question.options, autoResize])
 
   const handleQuestionTextChange = (text: string) => {
     onUpdate(questionIndex, { ...question, questionText: text })
@@ -114,7 +118,7 @@ export default function QuestionBuilder({
           ref={textareaRef}
           value={question.questionText}
           onChange={(e) => handleQuestionTextChange(e.target.value)}
-          onInput={autoResize}
+          onInput={() => autoResize(textareaRef.current)}
           placeholder="Enter your question..."
           className="w-full text-base font-medium border-0 border-b border-slate-200 rounded-none px-0 py-2 focus:border-blue-500 focus:ring-0 bg-transparent placeholder:text-slate-300 resize-none overflow-hidden outline-none"
           rows={1}
@@ -128,13 +132,13 @@ export default function QuestionBuilder({
             {question.options.map((option, optIndex) => (
               <label
                 key={optIndex}
-                className={`flex items-center gap-1.5 sm:gap-3 px-1 py-2.5 sm:-mx-1 sm:px-3 rounded-lg cursor-pointer transition-all duration-150 group ${
+                className={`flex items-start gap-1.5 sm:gap-3 px-1 py-2.5 sm:-mx-1 sm:px-3 rounded-lg cursor-pointer transition-all duration-150 group ${
                   option.isCorrect
                     ? "bg-emerald-50"
                     : "hover:bg-slate-50"
                 }`}
               >
-                <div className={`flex-shrink-0 w-3 h-3 sm:w-[18px] sm:h-[18px] rounded-full border-[1.5px] sm:border-2 flex items-center justify-center transition-colors ${
+                <div className={`flex-shrink-0 mt-1 w-3 h-3 sm:w-[18px] sm:h-[18px] rounded-full border-[1.5px] sm:border-2 flex items-center justify-center transition-colors ${
                   option.isCorrect
                     ? "border-emerald-500 bg-emerald-500"
                     : "border-slate-300 group-hover:border-slate-400"
@@ -154,22 +158,19 @@ export default function QuestionBuilder({
                   className="sr-only"
                   required
                 />
-                <span className={`hidden sm:inline flex-shrink-0 text-xs font-medium sm:w-5 text-center ${option.isCorrect ? "text-emerald-600" : "text-slate-400"}`}>
+                <span className={`hidden sm:inline flex-shrink-0 mt-0.5 text-xs font-medium sm:w-5 text-center ${option.isCorrect ? "text-emerald-600" : "text-slate-400"}`}>
                   {String.fromCharCode(65 + optIndex)}
                 </span>
-                <input
-                  type="text"
+                <textarea
+                  ref={(el) => { optionRefs.current[optIndex] = el }}
                   value={option.optionText}
                   onChange={(e) => handleOptionChange(optIndex, e.target.value)}
+                  onInput={(e) => autoResize(e.currentTarget)}
                   placeholder={`Option ${String.fromCharCode(65 + optIndex)}`}
-                  className="flex-1 bg-transparent border-0 outline-none text-base font-medium text-slate-700 placeholder:text-slate-300 py-0.5"
+                  className="flex-1 bg-transparent border-0 outline-none text-base font-medium text-slate-700 placeholder:text-slate-300 py-0.5 resize-none overflow-hidden"
+                  rows={1}
                   required
                 />
-                {option.isCorrect && (
-                  <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded uppercase tracking-wide flex-shrink-0">
-                    Correct
-                  </span>
-                )}
               </label>
             ))}
           </div>
