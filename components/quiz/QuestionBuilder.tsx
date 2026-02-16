@@ -162,7 +162,7 @@ export default function QuestionBuilder({
                   value={option.optionText}
                   onChange={(e) => handleOptionChange(optIndex, e.target.value)}
                   placeholder={`Option ${String.fromCharCode(65 + optIndex)}`}
-                  className="flex-1 bg-transparent border-0 outline-none text-sm sm:text-base text-slate-700 placeholder:text-slate-300 py-0.5"
+                  className="flex-1 bg-transparent border-0 outline-none text-base font-medium text-slate-700 placeholder:text-slate-300 py-0.5"
                   required
                 />
                 {option.isCorrect && (
